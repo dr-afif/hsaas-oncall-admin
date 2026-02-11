@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login - HSAAS Oncall Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #f0f2f5;">
+    <div class="card" style="max-width: 400px; text-align: center; width: 100%;">
+        <h1 style="color: var(--primary)">HSAAS Oncall</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Please sign in to manage your roster.</p>
+        <button id="loginBtn" class="btn btn-primary" style="width: 100%; padding: 1rem;">Log In with Google</button>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        initAuth().then(session => {
+            if (session) window.location.href = 'app.html';
+        });
+        document.getElementById('loginBtn').onclick = login;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "hsaas-oncall-admin",
+  "version": "1.0.0",
+  "description": "Hospital Oncall Roster Manager",
+  "scripts": {
+    "start": "npx serve public"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "serve": "^14.2.3"
+  }
+}

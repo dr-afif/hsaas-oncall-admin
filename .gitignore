@@ -1,0 +1,11 @@
+# Local configuration
+public/js/config.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Workspace settings
+.vscode/
+.idea/
+.gemini/
