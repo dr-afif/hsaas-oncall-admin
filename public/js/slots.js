@@ -20,7 +20,7 @@ async function renderSlots() {
 async function loadSlots() {
     if (!state.activeDeptId) return;
     const month = document.getElementById('slotMonth').value;
-    const { data } = await supabase.from('slot_definitions')
+    const { data } = await sb.from('slot_definitions')
         .select('*')
         .eq('department_id', state.activeDeptId)
         .eq('active', true)
@@ -61,7 +61,7 @@ async function loadSlots() {
 
 async function moveSlot(id, direction) {
     const month = document.getElementById('slotMonth').value;
-    const { data: slots } = await supabase.from('slot_definitions')
+    const { data: slots } = await sb.from('slot_definitions')
         .select('*')
         .eq('department_id', state.activeDeptId)
         .eq('active', true)
@@ -89,8 +89,8 @@ async function moveSlot(id, direction) {
     }
 
     await Promise.all([
-        supabase.from('slot_definitions').update({ order_index: currentNewOrder }).eq('id', current.id),
-        supabase.from('slot_definitions').update({ order_index: targetNewOrder }).eq('id', target.id)
+        sb.from('slot_definitions').update({ order_index: currentNewOrder }).eq('id', current.id),
+        sb.from('slot_definitions').update({ order_index: targetNewOrder }).eq('id', target.id)
     ]);
 
     loadSlots();
@@ -99,7 +99,7 @@ async function moveSlot(id, direction) {
 async function showSlotModal(id = null) {
     let slot = { slot_key: '', label: '', required: false, max_people: 1, effective_from_month: document.getElementById('slotMonth').value, effective_to_month: '' };
     if (id) {
-        const { data } = await supabase.from('slot_definitions').select('*').eq('id', id).single();
+        const { data } = await sb.from('slot_definitions').select('*').eq('id', id).single();
         slot = data;
     }
 
@@ -148,7 +148,7 @@ async function showSlotModal(id = null) {
 
         if (!id) {
             // New slot: put at the end
-            const { data: existing } = await supabase.from('slot_definitions')
+            const { data: existing } = await sb.from('slot_definitions')
                 .select('order_index')
                 .eq('department_id', state.activeDeptId)
                 .order('order_index', { ascending: false })
@@ -157,8 +157,8 @@ async function showSlotModal(id = null) {
         }
 
         const { error } = id
-            ? await supabase.from('slot_definitions').update(data).eq('id', id)
-            : await supabase.from('slot_definitions').insert(data);
+            ? await sb.from('slot_definitions').update(data).eq('id', id)
+            : await sb.from('slot_definitions').insert(data);
 
         if (error) alert("Error saving slot: " + error.message);
         else {
@@ -177,7 +177,7 @@ async function copySlots() {
 
     if (!confirm(`Copy slots from ${prevMonth} to ${currentMonth}?`)) return;
 
-    const { data: prevSlots } = await supabase.from('slot_definitions')
+    const { data: prevSlots } = await sb.from('slot_definitions')
         .select('*')
         .eq('department_id', state.activeDeptId)
         .eq('active', true)
@@ -187,7 +187,7 @@ async function copySlots() {
     for (const s of prevSlots) {
         const { id, created_at, updated_at, ...payload } = s;
         payload.effective_from_month = currentMonth;
-        await supabase.from('slot_definitions').insert(payload);
+        await sb.from('slot_definitions').insert(payload);
     }
     loadSlots();
     showNotification("Slots copied from previous month.");

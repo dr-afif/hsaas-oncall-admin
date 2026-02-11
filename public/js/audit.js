@@ -8,7 +8,7 @@ async function renderAudit() {
         </div>
     `;
 
-    const { data } = await supabase.from('audit_log')
+    const { data } = await sb.from('audit_log')
         .select('*')
         .order('ts', { ascending: false })
         .limit(100);

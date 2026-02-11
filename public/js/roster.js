@@ -77,7 +77,7 @@ async function loadRosterData() {
     const month = rosterState.month;
 
     // 1. Load Slots for this month
-    const { data: slots, error: slotError } = await supabase.from('slot_definitions')
+    const { data: slots, error: slotError } = await sb.from('slot_definitions')
         .select('*')
         .eq('department_id', deptId)
         .eq('active', true)
@@ -95,8 +95,8 @@ async function loadRosterData() {
 
     // 2. Load Contacts and Aliases
     const [resC, resA] = await Promise.all([
-        supabase.from('contacts').select('*').eq('department_id', deptId).eq('active', true),
-        supabase.from('contact_aliases').select('*').eq('department_id', deptId).eq('active', true)
+        sb.from('contacts').select('*').eq('department_id', deptId).eq('active', true),
+        sb.from('contact_aliases').select('*').eq('department_id', deptId).eq('active', true)
     ]);
     rosterState.contacts = resC.data || [];
     rosterState.aliases = resA.data || [];
@@ -104,18 +104,18 @@ async function loadRosterData() {
     // 2b. Load Holidays for this month
     const [year, m] = month.split('-').map(Number);
     const lastDay = new Date(year, m, 0).getDate();
-    const { data: holidays } = await supabase.from('public_holidays')
+    const { data: holidays } = await sb.from('public_holidays')
         .select('*')
         .gte('date', `${month}-01`)
         .lte('date', `${month}-${String(lastDay).padStart(2, '0')}`);
     rosterState.holidays = holidays || [];
 
     // 3. Load or Create Roster Month
-    let { data: rm } = await supabase.from('roster_months')
+    let { data: rm } = await sb.from('roster_months')
         .select('*').eq('department_id', deptId).eq('month', month).single();
 
     if (!rm) {
-        const { data: newRm, error: insError } = await supabase.from('roster_months')
+        const { data: newRm, error: insError } = await sb.from('roster_months')
             .insert({ department_id: deptId, month }).select().single();
         if (insError) {
             console.error("Roster month insert error:", insError);
@@ -127,7 +127,7 @@ async function loadRosterData() {
     rosterState.rosterMonthId = rm.id;
 
     // 4. Load Cells
-    const { data: cells } = await supabase.from('roster_cells')
+    const { data: cells } = await sb.from('roster_cells')
         .select('*').eq('roster_month_id', rm.id);
 
     rosterState.cells = {};
@@ -416,7 +416,7 @@ async function saveRoster() {
         let result;
         if (payload.id) {
             // Optimistic lock: update only if version matches
-            result = await supabase.from('roster_cells')
+            result = await sb.from('roster_cells')
                 .update({ ...payload, version: payload.version + 1 })
                 .eq('id', payload.id)
                 .eq('version', payload.version);
@@ -426,7 +426,7 @@ async function saveRoster() {
                 return;
             }
         } else {
-            result = await supabase.from('roster_cells').insert(payload);
+            result = await sb.from('roster_cells').insert(payload);
         }
     }
 
@@ -474,11 +474,11 @@ async function publishRoster() {
         return;
     }
 
-    const { error } = await supabase.from('roster_months')
+    const { error } = await sb.from('roster_months')
         .update({ status: 'published' })
         .eq('id', rosterState.rosterMonthId);
 
-    await supabase.from('publish_events').insert({
+    await sb.from('publish_events').insert({
         roster_month_id: rosterState.rosterMonthId,
         department_id: state.activeDeptId,
         month: rosterState.month,

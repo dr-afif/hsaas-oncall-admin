@@ -1,5 +1,9 @@
-// public/js/supabase-client.js
-// Initialize Supabase client. We use the global 'supabase' object from the CDN to create our instance.
-// We overwrite the global 'supabase' with our client instance for ease of use in other scripts.
+// public/js/sb-client.js
+// Initialize sb client. We use the global 'sb' object from the CDN to create our instance.
+// We overwrite the global 'sb' with our client instance for ease of use in other scripts.
 const config = window.APP_CONFIG || {};
-window.supabase = window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY);
+if (config.sb_URL && config.sb_ANON_KEY) {
+    window.sb = window.supabase.createClient(config.sb_URL, config.sb_ANON_KEY);
+} else {
+    console.error("sb config missing!");
+}

@@ -17,7 +17,7 @@ async function init() {
     state.user = session.user;
 
     // Fetch account info
-    const { data: members, error } = await supabase
+    const { data: members, error } = await sb
         .from('department_members')
         .select('*, departments(*)')
         .eq('email', state.user.email.toLowerCase())
@@ -47,7 +47,7 @@ async function init() {
 }
 
 async function loadDeptsForAdmin() {
-    const { data } = await supabase.from('departments').select('*').eq('active', true);
+    const { data } = await sb.from('departments').select('*').eq('active', true);
     if (!data || data.length === 0) return;
 
     const select = document.getElementById('activeDeptId');

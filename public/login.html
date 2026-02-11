@@ -19,10 +19,18 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/auth.js"></script>
     <script>
+        const btn = document.getElementById('loginBtn');
+        btn.onclick = () => {
+            if (typeof sb === 'undefined') {
+                alert("Supabase client not initialized. Check your configuration.");
+                return;
+            }
+            login();
+        };
+
         initAuth().then(session => {
             if (session) window.location.href = 'app.html';
-        });
-        document.getElementById('loginBtn').onclick = login;
+        }).catch(err => console.error("Auth check failed:", err));
     </script>
 </body>
 

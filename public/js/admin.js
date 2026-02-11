@@ -32,8 +32,8 @@ async function renderAdmin() {
 
 async function loadAdminData() {
     const [depts, members] = await Promise.all([
-        supabase.from('departments').select('*').order('id'),
-        supabase.from('department_members').select('*').order('email')
+        sb.from('departments').select('*').order('id'),
+        sb.from('department_members').select('*').order('email')
     ]);
 
     // Render Departments
@@ -79,7 +79,7 @@ async function loadAdminData() {
     document.getElementById('membersAdmin').innerHTML = mHtml + `</tbody></table>`;
 
     // Render Holidays
-    const { data: holidays } = await supabase.from('public_holidays').select('*').order('date', { ascending: false }).limit(20);
+    const { data: holidays } = await sb.from('public_holidays').select('*').order('date', { ascending: false }).limit(20);
     let hHtml = `<table style="width:100%; border-collapse: collapse;">
         <thead><tr style="border-bottom: 2px solid var(--border)">
             <th style="padding: 0.5rem; text-align: left;">Date</th>
@@ -132,7 +132,7 @@ async function showHolidayModal() {
         const data = Object.fromEntries(fd.entries());
         data.is_state_holiday = fd.get('is_state_holiday') === 'on';
 
-        const { error } = await supabase.from('public_holidays').insert(data);
+        const { error } = await sb.from('public_holidays').insert(data);
         if (error) alert(error.message);
         else { closeModal(); loadAdminData(); showNotification("Holiday added."); }
     };
@@ -140,7 +140,7 @@ async function showHolidayModal() {
 
 async function deleteHoliday(id) {
     if (!confirm("Are you sure you want to remove this public holiday?")) return;
-    const { error } = await supabase.from('public_holidays').delete().eq('id', id);
+    const { error } = await sb.from('public_holidays').delete().eq('id', id);
     if (error) alert(error.message);
     else { loadAdminData(); showNotification("Holiday removed."); }
 }
@@ -172,7 +172,7 @@ async function syncHolidays2026() {
         { date: '2026-12-25', name: "Christmas Day", is_state_holiday: false }
     ];
 
-    const { error } = await supabase.from('public_holidays').upsert(holidays, { onConflict: 'date' });
+    const { error } = await sb.from('public_holidays').upsert(holidays, { onConflict: 'date' });
 
     if (error) {
         alert("Error syncing holidays: " + error.message);
@@ -185,7 +185,7 @@ async function syncHolidays2026() {
 async function showDeptModal(id = null) {
     let dept = { id: '', name: '', active: true };
     if (id) {
-        const { data } = await supabase.from('departments').select('*').eq('id', id).single();
+        const { data } = await sb.from('departments').select('*').eq('id', id).single();
         dept = data;
     }
 
@@ -218,8 +218,8 @@ async function showDeptModal(id = null) {
         data.active = fd.get('active') === 'on';
 
         const { error } = id
-            ? await supabase.from('departments').update({ name: data.name, active: data.active }).eq('id', id)
-            : await supabase.from('departments').insert(data);
+            ? await sb.from('departments').update({ name: data.name, active: data.active }).eq('id', id)
+            : await sb.from('departments').insert(data);
 
         if (error) alert(error.message);
         else { closeModal(); loadAdminData(); showNotification("Department saved."); }
@@ -229,11 +229,11 @@ async function showDeptModal(id = null) {
 async function showMemberModal(email = null) {
     let member = { email: '', role: 'DEPT_USER', department_id: '', active: true };
     if (email) {
-        const { data } = await supabase.from('department_members').select('*').eq('email', email).single();
+        const { data } = await sb.from('department_members').select('*').eq('email', email).single();
         member = data;
     }
 
-    const { data: depts } = await supabase.from('departments').select('*').eq('active', true);
+    const { data: depts } = await sb.from('departments').select('*').eq('active', true);
 
     const modal = document.getElementById('modalContent');
     modal.innerHTML = `
@@ -275,8 +275,8 @@ async function showMemberModal(email = null) {
         data.email = data.email.toLowerCase();
 
         const { error } = email
-            ? await supabase.from('department_members').update({ role: data.role, department_id: data.department_id || null, active: data.active }).eq('email', email)
-            : await supabase.from('department_members').insert({ ...data, department_id: data.department_id || null });
+            ? await sb.from('department_members').update({ role: data.role, department_id: data.department_id || null, active: data.active }).eq('email', email)
+            : await sb.from('department_members').insert({ ...data, department_id: data.department_id || null });
 
         if (error) alert(error.message);
         else { closeModal(); loadAdminData(); showNotification("Member saved."); }

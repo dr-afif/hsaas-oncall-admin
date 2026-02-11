@@ -1,7 +1,7 @@
 // public/js/auth.js
 async function initAuth() {
-    // Supabase JS handles session persistence automatically in localStorage
-    const { data: { session }, error } = await supabase.auth.getSession();
+    // sb JS handles session persistence automatically in localStorage
+    const { data: { session }, error } = await sb.auth.getSession();
 
     if (error) {
         console.error("Auth session error:", error);
@@ -18,7 +18,7 @@ async function initAuth() {
 }
 
 async function login() {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await sb.auth.signInWithOAuth({
         provider: 'google',
         options: {
             redirectTo: window.location.origin + '/app.html'
@@ -28,7 +28,7 @@ async function login() {
 }
 
 async function logout() {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await sb.auth.signOut();
     if (error) console.error("Logout error:", error);
     window.location.href = 'login.html';
 }

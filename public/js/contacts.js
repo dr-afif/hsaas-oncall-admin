@@ -15,7 +15,7 @@ async function renderContacts() {
 
 async function loadContacts() {
     if (!state.activeDeptId) return;
-    const { data } = await supabase.from('contacts')
+    const { data } = await sb.from('contacts')
         .select('*').eq('department_id', state.activeDeptId).order('short_name');
 
     let html = `<table style="width:100%; text-align:left; border-collapse: collapse;">
@@ -46,7 +46,7 @@ async function loadContacts() {
 async function showContactModal(id = null) {
     let contact = { short_name: '', full_name: '', phone_number: '', position: '', active: true };
     if (id) {
-        const { data } = await supabase.from('contacts').select('*').eq('id', id).single();
+        const { data } = await sb.from('contacts').select('*').eq('id', id).single();
         contact = data;
     }
 
@@ -122,8 +122,8 @@ async function showContactModal(id = null) {
         data.department_id = state.activeDeptId;
 
         const { error } = id
-            ? await supabase.from('contacts').update(data).eq('id', id)
-            : await supabase.from('contacts').insert(data);
+            ? await sb.from('contacts').update(data).eq('id', id)
+            : await sb.from('contacts').insert(data);
 
         if (error) alert("Error saving contact: " + error.message);
         else {
