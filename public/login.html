@@ -19,30 +19,35 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/auth.js"></script>
     <script>
-        // Check for config immediately
-        if (typeof APP_CONFIG === 'undefined') {
-            document.body.innerHTML = `
-                <div style="padding: 2rem; color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; margin: 2rem; text-align: center; font-family: sans-serif;">
-                    <h3>⚠️ Configuration Missing</h3>
-                    <p>The <code>js/config.js</code> file was not found or is empty.</p>
-                    <p>Please check your Cloudflare Pages <b>Build Command</b> and <b>Environment Variables</b>.</p>
-                    <button onclick="location.reload()" style="padding: 0.5rem 1rem; cursor: pointer;">Retry</button>
-                </div>
-            `;
-        } else {
-            const btn = document.getElementById('loginBtn');
-            btn.onclick = () => {
-                if (typeof sb === 'undefined') {
-                    alert("Supabase client not initialized. Check console for details.");
-                    return;
-                }
-                login();
-            };
+        // Check for config immediately after scripts should have loaded
+        window.addEventListener('load', () => {
+            if (!window.APP_CONFIG) {
+                document.body.innerHTML = `
+                    <div style="padding: 2rem; color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; margin: 2rem; text-align: center; font-family: sans-serif;">
+                        <h3>⚠️ Configuration Missing</h3>
+                        <p>The <code>js/config.js</code> file was not found or is failing to load.</p>
+                        <p>Current URL: <code>${window.location.hostname}</code></p>
+                        <p style="font-size: 0.8rem; margin-top: 1rem;">Deploy Version: <b>1.0.2-fix</b></p>
+                        <hr style="border: 0; border-top: 1px solid #f5c6cb; margin: 1rem 0;">
+                        <p>Please check your Cloudflare Pages <b>Environment Variables</b> and ensure <b>Build output directory</b> is set to <code>public</code> (no slash).</p>
+                        <button onclick="location.reload()" style="padding: 0.5rem 1rem; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;">Retry</button>
+                    </div>
+                `;
+            } else {
+                const btn = document.getElementById('loginBtn');
+                btn.onclick = () => {
+                    if (typeof sb === 'undefined') {
+                        alert("Supabase client not initialized. Check console for details.");
+                        return;
+                    }
+                    login();
+                };
 
-            initAuth().then(session => {
-                if (session) window.location.href = 'app.html';
-            }).catch(err => console.error("Auth check failed:", err));
-        }
+                initAuth().then(session => {
+                    if (session) window.location.href = 'app.html';
+                }).catch(err => console.error("Auth check failed:", err));
+            }
+        });
     </script>
 </body>
 

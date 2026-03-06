@@ -19,8 +19,8 @@ if (!supabaseAnonKey) {
 
 const content = `// Auto-generated config
 window.APP_CONFIG = {
-    SUPABASE_URL: '${supabaseUrl}',
-    SUPABASE_ANON_KEY: '${supabaseAnonKey}',
+    SUPABASE_URL: ${JSON.stringify(supabaseUrl)},
+    SUPABASE_ANON_KEY: ${JSON.stringify(supabaseAnonKey)},
 };
 `;
 
