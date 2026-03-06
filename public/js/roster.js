@@ -151,11 +151,18 @@ async function loadRosterData() {
 
 function tryResolveName(val) {
     if (!val) return { contactId: null, rawText: null };
+    const cleanVal = val.trim().toLowerCase();
 
-    const contact = rosterState.contacts.find(c => c.short_name.toLowerCase() === val.trim().toLowerCase());
+    // 1. Check Short Name
+    let contact = rosterState.contacts.find(c => (c.short_name || '').toLowerCase() === cleanVal);
     if (contact) return { contactId: contact.id, rawText: null };
 
-    const alias = rosterState.aliases.find(a => a.alias_token.toLowerCase() === val.trim().toLowerCase());
+    // 2. Check Full Name (New: helps with Excel pastes and full-name entry)
+    contact = rosterState.contacts.find(c => (c.full_name || '').toLowerCase() === cleanVal);
+    if (contact) return { contactId: contact.id, rawText: null };
+
+    // 3. Check Aliases
+    const alias = rosterState.aliases.find(a => (a.alias_token || '').toLowerCase() === cleanVal);
     if (alias) return { contactId: alias.contact_id, rawText: null };
 
     return { contactId: null, rawText: val.trim() };
