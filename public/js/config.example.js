@@ -1,7 +1,6 @@
 // public/js/config.example.js
 // Copy this file to config.js and fill in your actual values.
 window.APP_CONFIG = {
-    // sb
-    sb_URL: 'YOUR_sb_URL',
-    sb_ANON_KEY: 'YOUR_sb_ANON_KEY',
+    SUPABASE_URL: 'YOUR_SUPABASE_URL',
+    SUPABASE_ANON_KEY: 'YOUR_SUPABASE_ANON_KEY',
 };
