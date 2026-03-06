@@ -203,9 +203,16 @@ function updateBulkDeleteVisibility() {
 }
 
 async function deleteContact(id, name) {
-    if (!confirm(`Are you sure you want to delete ${name}? This cannot be undone.`)) return;
+    if (!confirm(`Are you sure you want to delete ${name}? This will preserve their name in the roster as plain text, but the link will be broken. Continue?`)) return;
 
+    // 1. Preserve roster history by moving name to raw_text
+    await sb.from('roster_cells')
+        .update({ contact_id: null, raw_text: name })
+        .eq('contact_id', id);
+
+    // 2. Now delete the contact
     const { error } = await sb.from('contacts').delete().eq('id', id);
+
     if (error) {
         alert("Error deleting contact: " + error.message);
     } else {
@@ -219,9 +226,25 @@ async function deleteSelectedContacts() {
     const ids = Array.from(selectedBoxes).map(b => b.dataset.id);
 
     if (ids.length === 0) return;
-    if (!confirm(`Delete ${ids.length} selected contacts? This cannot be undone.`)) return;
 
+    if (!confirm(`Delete ${ids.length} selected contacts? This will un-link them from the roster but keep their names visible as text. Continue?`)) return;
+
+    // 1. Get names for all contacts to preserve them
+    const { data: contacts } = await sb.from('contacts').select('id, short_name').in('id', ids);
+
+    // 2. Update roster cells in bulk (one name at a time since they differ)
+    // We do this in parallel for speed
+    if (contacts) {
+        await Promise.all(contacts.map(c =>
+            sb.from('roster_cells')
+                .update({ contact_id: null, raw_text: c.short_name })
+                .eq('contact_id', c.id)
+        ));
+    }
+
+    // 3. Delete contacts
     const { error } = await sb.from('contacts').delete().in('id', ids);
+
     if (error) {
         alert("Error deleting contacts: " + error.message);
     } else {
