@@ -5,12 +5,93 @@ async function renderContacts() {
         <div class="card">
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2>Contacts</h2>
-                <button class="btn btn-primary" onclick="showContactModal()">Add Contact</button>
+                <div style="display:flex; gap: 1rem;">
+                    <button class="btn btn-ghost" onclick="showBulkContactModal()">Bulk Add</button>
+                    <button class="btn btn-primary" onclick="showContactModal()">Add Contact</button>
+                </div>
             </div>
             <div id="contactsTable">Loading...</div>
         </div>
     `;
     loadContacts();
+}
+
+async function showBulkContactModal() {
+    const modal = document.getElementById('modalContent');
+    modal.innerHTML = `
+        <h3>Bulk Add Contacts</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Paste data from Excel/TSV below. Columns should be:<br>
+            <strong>Short Name | Full Name | Phone | Position</strong>
+        </p>
+        <textarea id="bulkPasteArea" placeholder="ShortName\tFullName\tPhone\tPosition" style="width:100%; height: 300px; font-family: monospace; margin-bottom: 1rem; padding: 1rem;"></textarea>
+        <div id="bulkPreview" style="margin-bottom: 1rem; max-height: 200px; overflow-y: auto; font-size: 0.8rem;"></div>
+        <div style="display:flex; justify-content: flex-end; gap: 1rem;">
+            <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            <button id="saveBulkBtn" class="btn btn-primary">Save Contacts</button>
+        </div>
+    `;
+
+    const area = document.getElementById('bulkPasteArea');
+    const preview = document.getElementById('bulkPreview');
+    const saveBtn = document.getElementById('saveBulkBtn');
+
+    area.oninput = () => {
+        const lines = area.value.trim().split('\n').filter(l => l.trim());
+        if (lines.length === 0) {
+            preview.innerHTML = '';
+            return;
+        }
+
+        let html = '<table style="width:100%; border-collapse: collapse;"><thead><tr style="text-align:left; border-bottom:1px solid #ccc;"><th>Short</th><th>Full</th><th>Phone</th><th>Pos</th></tr></thead><tbody>';
+        const rows = lines.map(line => line.split('\t'));
+
+        rows.forEach(r => {
+            html += `<tr style="border-bottom: 1px solid #eee;">
+                <td>${r[0] || '?'}</td>
+                <td>${r[1] || '?'}</td>
+                <td>${r[2] || '-'}</td>
+                <td>${r[3] || '-'}</td>
+            </tr>`;
+        });
+        preview.innerHTML = html + '</tbody></table>';
+    };
+
+    saveBtn.onclick = async () => {
+        const lines = area.value.trim().split('\n').filter(l => l.trim());
+        if (lines.length === 0) return;
+
+        if (!confirm(`Import ${lines.length} contacts?`)) return;
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+
+        const contacts = lines.map(line => {
+            const parts = line.split('\t');
+            return {
+                department_id: state.activeDeptId,
+                short_name: (parts[0] || '').trim(),
+                full_name: (parts[1] || '').trim(),
+                phone_number: (parts[2] || '').trim(),
+                position: (parts[3] || '').trim(),
+                active: true
+            };
+        }).filter(c => c.short_name && c.full_name);
+
+        const { error } = await sb.from('contacts').insert(contacts);
+
+        if (error) {
+            alert("Error saving contacts: " + error.message);
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save Contacts';
+        } else {
+            closeModal();
+            loadContacts();
+            showNotification(`Successfully added ${contacts.length} contacts.`);
+        }
+    };
+
+    document.getElementById('modalOverlay').style.display = 'flex';
 }
 
 async function loadContacts() {
@@ -76,9 +157,8 @@ async function showContactModal(id = null) {
                     <option value="Consultant" ${contact.position === 'Consultant' ? 'selected' : ''}>Consultant</option>
                 </select>
             </div>
-            <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                <input type="checkbox" name="active" ${contact.active ? 'checked' : ''} style="width: auto; margin: 0;">
-                <span>Active</span>
+            <div style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px;">
+                <strong>Status Info:</strong> Active status is now automatically managed based on the roster. If this person is assigned to any shifts in the current roster, they will be marked as Active.
             </div>
             <div style="display:flex; justify-content: flex-end; gap: 1rem;">
                 <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -118,7 +198,6 @@ async function showContactModal(id = null) {
 
         const fd = new FormData(e.target);
         const data = Object.fromEntries(fd.entries());
-        data.active = fd.get('active') === 'on';
         data.department_id = state.activeDeptId;
 
         const { error } = id

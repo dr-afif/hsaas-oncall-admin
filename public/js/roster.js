@@ -93,9 +93,9 @@ async function loadRosterData() {
 
     rosterState.slots = slots || [];
 
-    // 2. Load Contacts and Aliases
+    // 2. Load Contacts and Aliases - Load all contacts so we can reactivate names automatically
     const [resC, resA] = await Promise.all([
-        sb.from('contacts').select('*').eq('department_id', deptId).eq('active', true),
+        sb.from('contacts').select('*').eq('department_id', deptId).order('short_name'),
         sb.from('contact_aliases').select('*').eq('department_id', deptId).eq('active', true)
     ]);
     rosterState.contacts = resC.data || [];
@@ -132,10 +132,33 @@ async function loadRosterData() {
 
     rosterState.cells = {};
     cells.forEach(c => {
-        rosterState.cells[`${c.date}|${c.slot_definition_id}|${c.instance_index || 0}`] = c;
+        const key = `${c.date}|${c.slot_definition_id}|${c.instance_index || 0}`;
+        rosterState.cells[key] = c;
+
+        // Auto-resolve raw_text if contact_id is missing (e.g. if contact was added later)
+        if (!c.contact_id && c.raw_text) {
+            const resolved = tryResolveName(c.raw_text);
+            if (resolved.contactId) {
+                c.contact_id = resolved.contactId;
+                c.raw_text = null;
+                c.dirty = true; // Mark for saving if user clicks Save
+            }
+        }
     });
 
     buildGrid();
+}
+
+function tryResolveName(val) {
+    if (!val) return { contactId: null, rawText: null };
+
+    const contact = rosterState.contacts.find(c => c.short_name.toLowerCase() === val.trim().toLowerCase());
+    if (contact) return { contactId: contact.id, rawText: null };
+
+    const alias = rosterState.aliases.find(a => a.alias_token.toLowerCase() === val.trim().toLowerCase());
+    if (alias) return { contactId: alias.contact_id, rawText: null };
+
+    return { contactId: null, rawText: val.trim() };
 }
 
 function buildGrid() {
@@ -364,23 +387,9 @@ function updateCell(el, val, reRender = true) {
     const instanceIndex = el.dataset.instance || 0;
     const key = `${date}|${slotId}|${instanceIndex}`;
 
-    let contactId = null;
-    let rawText = null;
-
-    if (val) {
-        // Resolve logic
-        const contact = rosterState.contacts.find(c => c.short_name.toLowerCase() === val.toLowerCase());
-        if (contact) {
-            contactId = contact.id;
-        } else {
-            const alias = rosterState.aliases.find(a => a.alias_token.toLowerCase() === val.toLowerCase());
-            if (alias) {
-                contactId = alias.contact_id;
-            } else {
-                rawText = val;
-            }
-        }
-    }
+    const res = tryResolveName(val);
+    const contactId = res.contactId;
+    const rawText = res.rawText;
 
     const cell = rosterState.cells[key] || {
         roster_month_id: rosterState.rosterMonthId,
@@ -396,6 +405,36 @@ function updateCell(el, val, reRender = true) {
     rosterState.cells[key] = cell;
 
     if (reRender) buildGrid();
+}
+
+async function syncContactActiveStates() {
+    const deptId = state.activeDeptId;
+    const rmId = rosterState.rosterMonthId;
+    if (!deptId || !rmId) return;
+
+    console.log("Syncing contact active states for month:", rosterState.month);
+
+    // 1. Get all unique contact IDs currently in this roster month
+    const { data: cells } = await sb.from('roster_cells')
+        .select('contact_id')
+        .eq('roster_month_id', rmId)
+        .not('contact_id', 'is', null);
+
+    const activeIds = [...new Set(cells.map(c => c.contact_id))];
+
+    // 2. Set all contacts for this department to inactive first
+    await sb.from('contacts')
+        .update({ active: false })
+        .eq('department_id', deptId);
+
+    // 3. Set those present in the roster to active
+    if (activeIds.length > 0) {
+        await sb.from('contacts')
+            .update({ active: true })
+            .in('id', activeIds);
+    }
+
+    console.log(`Synced ${activeIds.length} active contacts.`);
 }
 
 async function saveRoster() {
@@ -430,7 +469,10 @@ async function saveRoster() {
         }
     }
 
-    showNotification("Roster saved successfully.");
+    // New: Automatically sync contact active statuses after roster save
+    await syncContactActiveStates();
+
+    showNotification("Roster saved and contact statuses updated.");
     loadRosterData();
 }
 
