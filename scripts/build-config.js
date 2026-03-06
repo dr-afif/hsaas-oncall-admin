@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const configPath = path.join(__dirname, '../public/js/config.js');
+const configPath = path.join(__dirname, '../public/js/app_config.js');
 const dirPath = path.dirname(configPath);
 
 // Ensure directory exists
