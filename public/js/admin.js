@@ -32,7 +32,7 @@ async function renderAdmin() {
 
 async function loadAdminData() {
     const [depts, members] = await Promise.all([
-        sb.from('departments').select('*').order('id'),
+        sb.from('departments').select('*').order('order_index'),
         sb.from('department_members').select('*').order('email')
     ]);
 
@@ -44,13 +44,19 @@ async function loadAdminData() {
             <th style="padding: 0.5rem; text-align: left;">Active</th>
             <th style="padding: 0.5rem; text-align: left;">Actions</th>
         </tr></thead><tbody>`;
-    depts.data.forEach(d => {
+    depts.data.forEach((d, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === depts.data.length - 1;
         dHtml += `<tr style="border-bottom: 1px solid var(--border)">
             <td style="padding: 0.5rem">${d.id}</td>
             <td style="padding: 0.5rem">${d.name}</td>
             <td style="padding: 0.5rem">${d.active ? '✅' : '❌'}</td>
             <td style="padding: 0.5rem">
-                <button class="btn btn-ghost" onclick="showDeptModal('${d.id}')">Edit</button>
+                <div style="display:flex; gap: 0.5rem;">
+                    <button class="btn btn-ghost" onclick="showDeptModal('${d.id}')">Edit</button>
+                    <button class="btn btn-ghost" onclick="moveDepartment('${d.id}', 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
+                    <button class="btn btn-ghost" onclick="moveDepartment('${d.id}', 'down')" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
+                </div>
             </td>
         </tr>`;
     });
@@ -145,6 +151,28 @@ async function deleteHoliday(id) {
     else { loadAdminData(); showNotification("Holiday removed."); }
 }
 
+async function moveDepartment(id, direction) {
+    const { data: depts } = await sb.from('departments').select('*').order('order_index');
+    const idx = depts.findIndex(d => d.id === id);
+    if (idx === -1) return;
+
+    let targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= depts.length) return;
+
+    const current = depts[idx];
+    const target = depts[targetIdx];
+
+    const currentNewOrder = target.order_index;
+    const targetNewOrder = current.order_index;
+
+    await Promise.all([
+        sb.from('departments').update({ order_index: currentNewOrder }).eq('id', current.id),
+        sb.from('departments').update({ order_index: targetNewOrder }).eq('id', target.id)
+    ]);
+
+    loadAdminData();
+}
+
 async function syncHolidays2026() {
     if (!confirm("This will populate 2026 Selangor public holidays from the official schedule. Continue?")) return;
 
@@ -216,6 +244,15 @@ async function showDeptModal(id = null) {
         const fd = new FormData(e.target);
         const data = Object.fromEntries(fd.entries());
         data.active = fd.get('active') === 'on';
+
+        if (!id) {
+            // New department: put at the end
+            const { data: existing } = await sb.from('departments')
+                .select('order_index')
+                .order('order_index', { ascending: false })
+                .limit(1);
+            data.order_index = (existing && existing.length > 0) ? (existing[0].order_index + 1) : 0;
+        }
 
         const { error } = id
             ? await sb.from('departments').update({ name: data.name, active: data.active }).eq('id', id)

@@ -47,7 +47,7 @@ async function init() {
 }
 
 async function loadDeptsForAdmin() {
-    const { data } = await sb.from('departments').select('*').eq('active', true);
+    const { data } = await sb.from('departments').select('*').eq('active', true).order('order_index');
     if (!data || data.length === 0) return;
 
     const select = document.getElementById('activeDeptId');
