@@ -6,6 +6,7 @@ async function renderContacts() {
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2>Contacts</h2>
                 <div style="display:flex; gap: 1rem;">
+                    <button id="bulkDeleteBtn" class="btn btn-ghost hidden" style="color: var(--danger)" onclick="deleteSelectedContacts()">Delete Selected</button>
                     <button class="btn btn-ghost" onclick="showBulkContactModal()">Bulk Add</button>
                     <button class="btn btn-primary" onclick="showContactModal()">Add Contact</button>
                 </div>
@@ -153,6 +154,7 @@ async function loadContacts() {
 
     let html = `<table style="width:100%; text-align:left; border-collapse: collapse;">
         <thead><tr style="border-bottom: 2px solid var(--border)">
+            <th style="padding: 1rem; width: 40px;"><input type="checkbox" id="selectAllContacts" onclick="toggleAllContacts(this)"></th>
             <th style="padding: 1rem">Short Name</th>
             <th style="padding: 1rem">Full Name</th>
             <th style="padding: 1rem">Phone</th>
@@ -163,17 +165,69 @@ async function loadContacts() {
 
     data.forEach(c => {
         html += `<tr style="border-bottom: 1px solid var(--border)">
+            <td style="padding: 1rem"><input type="checkbox" class="contact-checkbox" data-id="${c.id}" onclick="updateBulkDeleteVisibility()"></td>
             <td style="padding: 1rem">${c.short_name}</td>
             <td style="padding: 1rem">${c.full_name}</td>
             <td style="padding: 1rem">${c.phone_number || '-'}</td>
             <td style="padding: 1rem">${c.position || '-'}</td>
             <td style="padding: 1rem">${c.active ? '✅' : '❌'}</td>
             <td style="padding: 1rem">
-                <button class="btn btn-ghost" onclick="showContactModal('${c.id}')">Edit</button>
+                <div style="display:flex; gap: 0.5rem;">
+                    <button class="btn btn-ghost" onclick="showContactModal('${c.id}')">Edit</button>
+                    <button class="btn btn-ghost" style="color: var(--danger)" onclick="deleteContact('${c.id}', '${c.short_name}')">Delete</button>
+                </div>
             </td>
         </tr>`;
     });
     document.getElementById('contactsTable').innerHTML = html + `</tbody></table>`;
+    updateBulkDeleteVisibility();
+}
+
+function toggleAllContacts(master) {
+    const boxes = document.querySelectorAll('.contact-checkbox');
+    boxes.forEach(b => b.checked = master.checked);
+    updateBulkDeleteVisibility();
+}
+
+function updateBulkDeleteVisibility() {
+    const selected = document.querySelectorAll('.contact-checkbox:checked').length;
+    const btn = document.getElementById('bulkDeleteBtn');
+    if (btn) {
+        if (selected > 0) {
+            btn.classList.remove('hidden');
+            btn.innerText = `Delete Selected (${selected})`;
+        } else {
+            btn.classList.add('hidden');
+        }
+    }
+}
+
+async function deleteContact(id, name) {
+    if (!confirm(`Are you sure you want to delete ${name}? This cannot be undone.`)) return;
+
+    const { error } = await sb.from('contacts').delete().eq('id', id);
+    if (error) {
+        alert("Error deleting contact: " + error.message);
+    } else {
+        showNotification("Contact deleted.");
+        loadContacts();
+    }
+}
+
+async function deleteSelectedContacts() {
+    const selectedBoxes = document.querySelectorAll('.contact-checkbox:checked');
+    const ids = Array.from(selectedBoxes).map(b => b.dataset.id);
+
+    if (ids.length === 0) return;
+    if (!confirm(`Delete ${ids.length} selected contacts? This cannot be undone.`)) return;
+
+    const { error } = await sb.from('contacts').delete().in('id', ids);
+    if (error) {
+        alert("Error deleting contacts: " + error.message);
+    } else {
+        showNotification(`${ids.length} contacts deleted.`);
+        loadContacts();
+    }
 }
 
 async function showContactModal(id = null) {
