@@ -17,6 +17,10 @@ async function renderContacts() {
 }
 
 async function showBulkContactModal() {
+    // 1. Fetch existing contacts for duplicate checking
+    const { data: existing } = await sb.from('contacts').select('short_name').eq('department_id', state.activeDeptId);
+    const existingShortNames = new Set((existing || []).map(c => c.short_name.toLowerCase()));
+
     const modal = document.getElementById('modalContent');
     modal.innerHTML = `
         <h3>Bulk Add Contacts</h3>
@@ -24,61 +28,109 @@ async function showBulkContactModal() {
             Paste data from Excel/TSV below. Columns should be:<br>
             <strong>Short Name | Full Name | Phone | Position</strong>
         </p>
-        <textarea id="bulkPasteArea" placeholder="ShortName\tFullName\tPhone\tPosition" style="width:100%; height: 300px; font-family: monospace; margin-bottom: 1rem; padding: 1rem;"></textarea>
-        <div id="bulkPreview" style="margin-bottom: 1rem; max-height: 200px; overflow-y: auto; font-size: 0.8rem;"></div>
+        <textarea id="bulkPasteArea" placeholder="ShortName\tFullName\tPhone\tPosition" style="width:100%; height: 250px; font-family: monospace; margin-bottom: 1rem; padding: 1rem;"></textarea>
+        <div id="bulkStatus" style="font-size: 0.9rem; margin-bottom: 0.5rem; font-weight: bold;"></div>
+        <div id="bulkPreview" style="margin-bottom: 1rem; max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px;"></div>
         <div style="display:flex; justify-content: flex-end; gap: 1rem;">
             <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-            <button id="saveBulkBtn" class="btn btn-primary">Save Contacts</button>
+            <button id="saveBulkBtn" class="btn btn-primary" disabled>Save Contacts</button>
         </div>
     `;
 
     const area = document.getElementById('bulkPasteArea');
     const preview = document.getElementById('bulkPreview');
+    const status = document.getElementById('bulkStatus');
     const saveBtn = document.getElementById('saveBulkBtn');
 
     area.oninput = () => {
         const lines = area.value.trim().split('\n').filter(l => l.trim());
         if (lines.length === 0) {
             preview.innerHTML = '';
+            status.innerHTML = '';
+            saveBtn.disabled = true;
             return;
         }
 
-        let html = '<table style="width:100%; border-collapse: collapse;"><thead><tr style="text-align:left; border-bottom:1px solid #ccc;"><th>Short</th><th>Full</th><th>Phone</th><th>Pos</th></tr></thead><tbody>';
-        const rows = lines.map(line => line.split('\t'));
+        let html = '<table style="width:100%; border-collapse: collapse; font-size: 0.85rem;"><thead><tr style="text-align:left; background: var(--bg-secondary); position: sticky; top: 0;">' +
+            '<th style="padding: 0.5rem;">Short Name</th><th style="padding: 0.5rem;">Full Name</th><th style="padding: 0.5rem;">Phone</th><th style="padding: 0.5rem;">Status</th></tr></thead><tbody>';
 
-        rows.forEach(r => {
-            html += `<tr style="border-bottom: 1px solid #eee;">
-                <td>${r[0] || '?'}</td>
-                <td>${r[1] || '?'}</td>
-                <td>${r[2] || '-'}</td>
-                <td>${r[3] || '-'}</td>
+        const seenInBatch = new Set();
+        let errorCount = 0;
+        let newCount = 0;
+
+        const contacts = lines.map(line => {
+            const parts = line.split('\t');
+            const sn = (parts[0] || '').trim();
+            const fn = (parts[1] || '').trim();
+            const ph = (parts[2] || '').trim();
+            const pos = (parts[3] || '').trim();
+
+            let rowStatus = 'OK';
+            let rowStyle = '';
+            let isError = false;
+
+            if (!sn || !fn) {
+                rowStatus = 'Missing Name';
+                rowStyle = 'background: #fff0f0; color: #c00;';
+                isError = true;
+            } else if (existingShortNames.has(sn.toLowerCase())) {
+                rowStatus = 'Already Exists';
+                rowStyle = 'background: #fff0f0; color: #c00;';
+                isError = true;
+            } else if (seenInBatch.has(sn.toLowerCase())) {
+                rowStatus = 'Duplicate in List';
+                rowStyle = 'background: #fffbe6; color: #856404;';
+                isError = true;
+            }
+
+            if (sn) seenInBatch.add(sn.toLowerCase());
+            if (isError) errorCount++; else newCount++;
+
+            return { sn, fn, ph, pos, rowStatus, rowStyle };
+        });
+
+        contacts.forEach(c => {
+            html += `<tr style="border-bottom: 1px solid var(--border); ${c.rowStyle}">
+                <td style="padding: 0.5rem;">${c.sn || '?'}</td>
+                <td style="padding: 0.5rem;">${c.fn || '?'}</td>
+                <td style="padding: 0.5rem;">${c.ph || '-'}</td>
+                <td style="padding: 0.5rem;"><strong>${c.rowStatus}</strong></td>
             </tr>`;
         });
+
         preview.innerHTML = html + '</tbody></table>';
+        status.innerHTML = `Found ${newCount} valid new contacts, ${errorCount} issues detected.`;
+        status.style.color = errorCount > 0 ? '#c00' : 'var(--success)';
+        saveBtn.disabled = newCount === 0;
     };
 
     saveBtn.onclick = async () => {
         const lines = area.value.trim().split('\n').filter(l => l.trim());
-        if (lines.length === 0) return;
+        const seenInBatch = new Set();
 
-        if (!confirm(`Import ${lines.length} contacts?`)) return;
-
-        saveBtn.disabled = true;
-        saveBtn.innerText = 'Saving...';
-
-        const contacts = lines.map(line => {
+        const toSave = lines.map(line => {
             const parts = line.split('\t');
+            const sn = (parts[0] || '').trim();
+            if (!sn || existingShortNames.has(sn.toLowerCase()) || seenInBatch.has(sn.toLowerCase())) return null;
+            seenInBatch.add(sn.toLowerCase());
+
             return {
                 department_id: state.activeDeptId,
-                short_name: (parts[0] || '').trim(),
+                short_name: sn,
                 full_name: (parts[1] || '').trim(),
                 phone_number: (parts[2] || '').trim(),
                 position: (parts[3] || '').trim(),
                 active: true
             };
-        }).filter(c => c.short_name && c.full_name);
+        }).filter(c => c && c.full_name);
 
-        const { error } = await sb.from('contacts').insert(contacts);
+        if (toSave.length === 0) return;
+        if (!confirm(`Import ${toSave.length} valid contacts?`)) return;
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+
+        const { error } = await sb.from('contacts').insert(toSave);
 
         if (error) {
             alert("Error saving contacts: " + error.message);
@@ -87,7 +139,7 @@ async function showBulkContactModal() {
         } else {
             closeModal();
             loadContacts();
-            showNotification(`Successfully added ${contacts.length} contacts.`);
+            showNotification(`Successfully added ${toSave.length} contacts.`);
         }
     };
 
