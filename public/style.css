@@ -12,6 +12,7 @@
     --warning: #f59e0b;
     --success: #10b981;
     --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --date-col-width: 150px;
 }
 
 body {
@@ -142,18 +143,56 @@ nav a.active {
 }
 
 .roster-table {
-    border-collapse: collapse;
-    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: max-content;
     table-layout: fixed;
 }
 
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    text-align: left;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.admin-table thead tr {
+    border-bottom: 2px solid var(--border);
+}
+
+.admin-table th {
+    font-weight: 600;
+    color: var(--text-muted);
+    background: #f8fafc;
+}
+
+.date-col {
+    width: var(--date-col-width);
+    min-width: var(--date-col-width);
+    max-width: var(--date-col-width);
+}
+
+
 .roster-table th,
 .roster-table td {
-    border: 1px solid var(--border);
-    padding: 0.5rem;
-    min-width: 120px;
-    height: 40px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 4px;
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    height: 50px;
     text-align: center;
+    vertical-align: middle;
+    word-wrap: break-word;
+    white-space: normal;
+    background: white;
 }
 
 .roster-table th {
@@ -161,10 +200,20 @@ nav a.active {
     position: sticky;
     top: 0;
     z-index: 10;
+    font-size: 0.7rem;
+    border-top: 1px solid var(--border);
+}
+
+/* First column border */
+.roster-table th:first-child,
+.roster-table td:first-child {
+    border-left: 1px solid var(--border);
 }
 
 .roster-table .date-col {
-    width: 150px;
+    width: var(--date-col-width);
+    min-width: var(--date-col-width);
+    max-width: var(--date-col-width);
     background: #f1f5f9;
     position: sticky;
     left: 0;
@@ -175,6 +224,9 @@ nav a.active {
 .roster-cell {
     cursor: text;
     position: relative;
+    font-size: 0.75rem;
+    line-height: 1.1;
+    word-break: break-all;
 }
 
 .roster-cell.focused {

@@ -414,34 +414,49 @@ function updateCell(el, val, reRender = true) {
     if (reRender) buildGrid();
 }
 
-async function syncContactActiveStates() {
+async function syncContactActiveStates(targetMonth = null) {
     const deptId = state.activeDeptId;
-    const rmId = rosterState.rosterMonthId;
-    if (!deptId || !rmId) return;
+    const month = targetMonth || rosterState.month;
+    if (!deptId || !month) return;
 
-    console.log("Syncing contact active states for month:", rosterState.month);
+    console.log("Syncing contact active states for month:", month);
 
-    // 1. Get all unique contact IDs currently in this roster month
-    const { data: cells } = await sb.from('roster_cells')
-        .select('contact_id')
-        .eq('roster_month_id', rmId)
-        .not('contact_id', 'is', null);
+    try {
+        // 1. Get all unique contact IDs currently in THIS roster month for this department
+        const { data: cells, error: cellError } = await sb.from('roster_cells')
+            .select('contact_id, roster_months!inner(department_id, month)')
+            .eq('roster_months.department_id', deptId)
+            .eq('roster_months.month', month)
+            .not('contact_id', 'is', null)
+            .limit(1000);
 
-    const activeIds = [...new Set(cells.map(c => c.contact_id))];
+        if (cellError) throw cellError;
 
-    // 2. Set all contacts for this department to inactive first
-    await sb.from('contacts')
-        .update({ active: false })
-        .eq('department_id', deptId);
+        const activeIds = [...new Set(cells.map(c => c.contact_id).filter(id => id))];
 
-    // 3. Set those present in the roster to active
-    if (activeIds.length > 0) {
-        await sb.from('contacts')
-            .update({ active: true })
-            .in('id', activeIds);
+        // 2. Set ALL contacts for this department to inactive first
+        // Note: This is departmental scope. 
+        const { error: resetError } = await sb.from('contacts')
+            .update({ active: false })
+            .eq('department_id', deptId);
+
+        if (resetError) throw resetError;
+
+        // 3. Set those present in the target roster to active
+        if (activeIds.length > 0) {
+            const { error: updateError } = await sb.from('contacts')
+                .update({ active: true })
+                .in('id', activeIds);
+
+            if (updateError) throw updateError;
+        }
+
+        console.log(`Synced ${activeIds.length} active contacts for ${month}.`);
+    } catch (err) {
+        console.error("Failed to sync contact active states:", err.message);
+        // We don't alert here to avoid interrupting the user if save succeeded but sync failed,
+        // but it will be in the console for debugging.
     }
-
-    console.log(`Synced ${activeIds.length} active contacts.`);
 }
 
 async function saveRoster() {
@@ -455,32 +470,38 @@ async function saveRoster() {
         return;
     }
 
-    for (const cell of toUpsert) {
-        const { dirty, ...payload } = cell;
-        payload.updated_by_email = state.user.email;
+    try {
+        for (const cell of toUpsert) {
+            const { dirty, ...payload } = cell;
+            payload.updated_by_email = state.user.email;
 
-        let result;
-        if (payload.id) {
-            // Optimistic lock: update only if version matches
-            result = await sb.from('roster_cells')
-                .update({ ...payload, version: payload.version + 1 })
-                .eq('id', payload.id)
-                .eq('version', payload.version);
+            let result;
+            if (payload.id) {
+                // Optimistic lock: update only if version matches
+                const { error, count } = await sb.from('roster_cells')
+                    .update({ ...payload, version: payload.version + 1 })
+                    .eq('id', payload.id)
+                    .eq('version', payload.version);
 
-            if (result.error || result.count === 0) {
-                alert(`Conflict detected for ${payload.date}. Please reload.`);
-                return;
+                if (error || count === 0) {
+                    alert(`Conflict detected for ${payload.date}. Please reload.`);
+                    return;
+                }
+            } else {
+                result = await sb.from('roster_cells').insert(payload);
+                if (result.error) throw result.error;
             }
-        } else {
-            result = await sb.from('roster_cells').insert(payload);
         }
+
+        // Sync contact active statuses for the month we just saved
+        await syncContactActiveStates(rosterState.month);
+
+        showNotification("Roster saved and contact statuses updated.");
+        await loadRosterData();
+    } catch (err) {
+        console.error("Save failed:", err);
+        alert("Error saving roster changes: " + err.message);
     }
-
-    // New: Automatically sync contact active statuses after roster save
-    await syncContactActiveStates();
-
-    showNotification("Roster saved and contact statuses updated.");
-    loadRosterData();
 }
 
 async function validateRoster() {

@@ -37,21 +37,21 @@ async function loadAdminData() {
     ]);
 
     // Render Departments
-    let dHtml = `<table style="width:100%; border-collapse: collapse;">
-        <thead><tr style="border-bottom: 2px solid var(--border)">
-            <th style="padding: 0.5rem; text-align: left;">ID (Code)</th>
-            <th style="padding: 0.5rem; text-align: left;">Name</th>
-            <th style="padding: 0.5rem; text-align: left;">Active</th>
-            <th style="padding: 0.5rem; text-align: left;">Actions</th>
+    let dHtml = `<table class="admin-table">
+        <thead><tr>
+            <th>ID (Code)</th>
+            <th>Name</th>
+            <th>Active</th>
+            <th>Actions</th>
         </tr></thead><tbody>`;
     depts.data.forEach((d, idx) => {
         const isFirst = idx === 0;
         const isLast = idx === depts.data.length - 1;
-        dHtml += `<tr style="border-bottom: 1px solid var(--border)">
-            <td style="padding: 0.5rem">${d.id}</td>
-            <td style="padding: 0.5rem">${d.name}</td>
-            <td style="padding: 0.5rem">${d.active ? '✅' : '❌'}</td>
-            <td style="padding: 0.5rem">
+        dHtml += `<tr>
+            <td>${d.id}</td>
+            <td>${d.name}</td>
+            <td>${d.active ? '✅' : '❌'}</td>
+            <td>
                 <div style="display:flex; gap: 0.5rem;">
                     <button class="btn btn-ghost" onclick="showDeptModal('${d.id}')">Edit</button>
                     <button class="btn btn-ghost" onclick="moveDepartment('${d.id}', 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
@@ -63,21 +63,21 @@ async function loadAdminData() {
     document.getElementById('deptsAdmin').innerHTML = dHtml + `</tbody></table>`;
 
     // Render Members
-    let mHtml = `<table style="width:100%; border-collapse: collapse;">
-        <thead><tr style="border-bottom: 2px solid var(--border)">
-            <th style="padding: 0.5rem; text-align: left;">Email</th>
-            <th style="padding: 0.5rem; text-align: left;">Role</th>
-            <th style="padding: 0.5rem; text-align: left;">Dept</th>
-            <th style="padding: 0.5rem; text-align: left;">Active</th>
-            <th style="padding: 0.5rem; text-align: left;">Actions</th>
+    let mHtml = `<table class="admin-table">
+        <thead><tr>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Dept</th>
+            <th>Active</th>
+            <th>Actions</th>
         </tr></thead><tbody>`;
     members.data.forEach(m => {
-        mHtml += `<tr style="border-bottom: 1px solid var(--border)">
-            <td style="padding: 0.5rem">${m.email}</td>
-            <td style="padding: 0.5rem">${m.role}</td>
-            <td style="padding: 0.5rem">${m.department_id || 'N/A'}</td>
-            <td style="padding: 0.5rem">${m.active ? '✅' : '❌'}</td>
-            <td style="padding: 0.5rem">
+        mHtml += `<tr>
+            <td>${m.email}</td>
+            <td>${m.role}</td>
+            <td>${m.department_id || 'N/A'}</td>
+            <td>${m.active ? '✅' : '❌'}</td>
+            <td>
                 <button class="btn btn-ghost" onclick="showMemberModal('${m.email}')">Edit</button>
             </td>
         </tr>`;
@@ -86,19 +86,19 @@ async function loadAdminData() {
 
     // Render Holidays
     const { data: holidays } = await sb.from('public_holidays').select('*').order('date', { ascending: false }).limit(20);
-    let hHtml = `<table style="width:100%; border-collapse: collapse;">
-        <thead><tr style="border-bottom: 2px solid var(--border)">
-            <th style="padding: 0.5rem; text-align: left;">Date</th>
-            <th style="padding: 0.5rem; text-align: left;">Name</th>
-            <th style="padding: 0.5rem; text-align: left;">Type</th>
-            <th style="padding: 0.5rem; text-align: left;">Actions</th>
+    let hHtml = `<table class="admin-table">
+        <thead><tr>
+            <th class="date-col">Date</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Actions</th>
         </tr></thead><tbody>`;
     holidays.forEach(h => {
-        hHtml += `<tr style="border-bottom: 1px solid var(--border)">
-            <td style="padding: 0.5rem">${h.date}</td>
-            <td style="padding: 0.5rem">${h.name}</td>
-            <td style="padding: 0.5rem">${h.is_state_holiday ? 'Selangor' : 'National'}</td>
-            <td style="padding: 0.5rem">
+        hHtml += `<tr>
+            <td class="date-col">${h.date}</td>
+            <td>${h.name}</td>
+            <td>${h.is_state_holiday ? 'Selangor' : 'National'}</td>
+            <td>
                 <button class="btn btn-ghost" onclick="deleteHoliday('${h.id}')">Delete</button>
             </td>
         </tr>`;

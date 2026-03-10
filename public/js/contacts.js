@@ -152,26 +152,26 @@ async function loadContacts() {
     const { data } = await sb.from('contacts')
         .select('*').eq('department_id', state.activeDeptId).order('short_name');
 
-    let html = `<table style="width:100%; text-align:left; border-collapse: collapse;">
-        <thead><tr style="border-bottom: 2px solid var(--border)">
-            <th style="padding: 1rem; width: 40px;"><input type="checkbox" id="selectAllContacts" onclick="toggleAllContacts(this)"></th>
-            <th style="padding: 1rem">Short Name</th>
-            <th style="padding: 1rem">Full Name</th>
-            <th style="padding: 1rem">Phone</th>
-            <th style="padding: 1rem">Position</th>
-            <th style="padding: 1rem">Active</th>
-            <th style="padding: 1rem">Actions</th>
+    let html = `<table class="admin-table">
+        <thead><tr>
+            <th style="width: 40px;"><input type="checkbox" id="selectAllContacts" onclick="toggleAllContacts(this)"></th>
+            <th>Short Name</th>
+            <th>Full Name</th>
+            <th>Phone</th>
+            <th>Position</th>
+            <th>Active</th>
+            <th>Actions</th>
         </tr></thead><tbody>`;
 
     data.forEach(c => {
-        html += `<tr style="border-bottom: 1px solid var(--border)">
-            <td style="padding: 1rem"><input type="checkbox" class="contact-checkbox" data-id="${c.id}" onclick="updateBulkDeleteVisibility()"></td>
-            <td style="padding: 1rem">${c.short_name}</td>
-            <td style="padding: 1rem">${c.full_name}</td>
-            <td style="padding: 1rem">${c.phone_number || '-'}</td>
-            <td style="padding: 1rem">${c.position || '-'}</td>
-            <td style="padding: 1rem">${c.active ? '✅' : '❌'}</td>
-            <td style="padding: 1rem">
+        html += `<tr>
+            <td><input type="checkbox" class="contact-checkbox" data-id="${c.id}" onclick="updateBulkDeleteVisibility()"></td>
+            <td>${c.short_name}</td>
+            <td>${c.full_name}</td>
+            <td>${c.phone_number || '-'}</td>
+            <td>${c.position || '-'}</td>
+            <td>${c.active ? '✅' : '❌'}</td>
+            <td>
                 <div style="display:flex; gap: 0.5rem;">
                     <button class="btn btn-ghost" onclick="showContactModal('${c.id}')">Edit</button>
                     <button class="btn btn-ghost" style="color: var(--danger)" onclick="deleteContact('${c.id}', '${c.short_name}')">Delete</button>
