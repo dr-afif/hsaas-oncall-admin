@@ -140,6 +140,10 @@ nav a.active {
     border: 1px solid var(--border);
     margin: 0 1.5rem 1.5rem;
     background: white;
+    
+    /* Make the horizontal scrollbar sticky to the bottom of the viewport */
+    max-height: calc(100vh - 200px); 
+    position: relative;
 }
 
 .roster-table {
@@ -202,6 +206,8 @@ nav a.active {
     z-index: 10;
     font-size: 0.7rem;
     border-top: 1px solid var(--border);
+    /* Make sure headers stay above everything else when scrolling down */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
 }
 
 /* First column border */
@@ -217,8 +223,13 @@ nav a.active {
     background: #f1f5f9;
     position: sticky;
     left: 0;
-    z-index: 11;
+    z-index: 11; /* Keep above standard cells when scrolling horizontally */
     text-align: center;
+}
+
+/* Ensure the top-left corner cell stays above both headers and the date row */
+.roster-table th.date-col {
+    z-index: 12; 
 }
 
 .roster-cell {
@@ -412,6 +423,7 @@ main {
 
 #notification.error {
     border-left-color: var(--error);
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
 
 #notification.info {
@@ -420,6 +432,14 @@ main {
 
 #notification.warning {
     border-left-color: var(--warning);
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
 /* Checkbox and Select styles */
