@@ -286,8 +286,9 @@ async function showContactModal(id = null) {
                     <option value="Consultant" ${contact.position === 'Consultant' ? 'selected' : ''}>Consultant</option>
                 </select>
             </div>
-            <div style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem; background: var(--bg-secondary); border-radius: 4px;">
-                <strong>Status Info:</strong> Active status is now automatically managed based on the roster. If this person is assigned to any shifts in the current roster, they will be marked as Active.
+            <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" name="active" id="contactActive" ${contact.active ? 'checked' : ''} style="width: auto;">
+                <label for="contactActive">Active (Uncheck to hide from roster selection)</label>
             </div>
             <div style="display:flex; justify-content: flex-end; gap: 1rem;">
                 <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -328,6 +329,7 @@ async function showContactModal(id = null) {
         const fd = new FormData(e.target);
         const data = Object.fromEntries(fd.entries());
         data.department_id = state.activeDeptId;
+        data.active = fd.get('active') === 'on';
 
         const { error } = id
             ? await sb.from('contacts').update(data).eq('id', id)

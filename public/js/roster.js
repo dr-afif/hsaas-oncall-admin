@@ -436,51 +436,7 @@ function updateCell(el, val, reRender = true) {
     if (reRender) buildGrid();
 }
 
-async function syncContactActiveStates(targetMonth = null) {
-    const deptId = state.activeDeptId;
-    const month = targetMonth || rosterState.month;
-    if (!deptId || !month) return;
-
-    console.log("Syncing contact active states for month:", month);
-
-    try {
-        // 1. Get all unique contact IDs currently in THIS roster month for this department
-        const { data: cells, error: cellError } = await sb.from('roster_cells')
-            .select('contact_id, roster_months!inner(department_id, month)')
-            .eq('roster_months.department_id', deptId)
-            .eq('roster_months.month', month)
-            .not('contact_id', 'is', null)
-            .limit(1000);
-
-        if (cellError) throw cellError;
-
-        const activeIds = [...new Set(cells.map(c => c.contact_id).filter(id => id))];
-
-        // 2. Set ALL contacts for this department to inactive first
-        // Note: This is departmental scope. 
-        const { error: resetError } = await sb.from('contacts')
-            .update({ active: false })
-            .eq('department_id', deptId);
-
-        if (resetError) throw resetError;
-
-        // 3. Set those present in the target roster to active
-        if (activeIds.length > 0) {
-            const { error: updateError } = await sb.from('contacts')
-                .update({ active: true })
-                .in('id', activeIds);
-
-            if (updateError) throw updateError;
-        }
-
-        console.log(`Synced ${activeIds.length} active contacts for ${month}.`);
-    } catch (err) {
-        console.error("Failed to sync contact active states:", err.message);
-        // We don't alert here to avoid interrupting the user if save succeeded but sync failed,
-        // but it will be in the console for debugging.
-    }
-}
-
+ 
 async function saveRoster() {
     const toUpsert = Object.values(rosterState.cells).filter(c => c.dirty);
     if (toUpsert.length === 0) {
@@ -515,10 +471,7 @@ async function saveRoster() {
             }
         }
 
-        // Sync contact active statuses for the month we just saved
-        await syncContactActiveStates(rosterState.month);
-
-        showNotification("Roster saved and contact statuses updated.");
+        showNotification("Roster saved.");
         await loadRosterData();
     } catch (err) {
         console.error("Save failed:", err);
