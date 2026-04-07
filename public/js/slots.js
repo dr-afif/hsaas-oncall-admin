@@ -52,11 +52,25 @@ async function loadSlots() {
                     <button class="btn btn-ghost" onclick="showSlotModal('${s.id}')">Edit</button>
                     <button class="btn btn-ghost" onclick="moveSlot('${s.id}', 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
                     <button class="btn btn-ghost" onclick="moveSlot('${s.id}', 'down')" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
+                    <button class="btn btn-ghost" style="color:var(--danger)" onclick="deleteSlot('${s.id}', '${s.label.replace(/'/g, "\\'")}')">Delete</button>
                 </div>
             </td>
         </tr>`;
     });
     document.getElementById('slotsTable').innerHTML = html + `</tbody></table>`;
+}
+
+async function deleteSlot(id, label) {
+    if (!confirm(`Are you sure you want to delete the slot definition: ${label}?`)) return;
+
+    // Soft delete by setting active = false
+    const { error } = await sb.from('slot_definitions').update({ active: false }).eq('id', id);
+    if (error) {
+        alert("Error deleting slot: " + error.message);
+    } else {
+        showNotification("Slot definition deleted.");
+        loadSlots();
+    }
 }
 
 async function moveSlot(id, direction) {
