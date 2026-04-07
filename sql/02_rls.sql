@@ -13,12 +13,12 @@ CREATE OR REPLACE FUNCTION is_admin() RETURNS BOOLEAN AS $$
     SELECT 1 FROM department_members 
     WHERE email = current_email() AND role = 'ADMIN' AND active = true
   );
-$$ LANGUAGE sql STABLE;
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE FUNCTION my_department() RETURNS TEXT AS $$
   SELECT department_id FROM department_members 
   WHERE email = current_email() AND role = 'DEPT_USER' AND active = true;
-$$ LANGUAGE sql STABLE;
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
 -- Enable RLS on all tables
 ALTER TABLE departments ENABLE ROW LEVEL SECURITY;

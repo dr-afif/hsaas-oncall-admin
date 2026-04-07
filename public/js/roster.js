@@ -28,10 +28,19 @@ async function renderRoster() {
                 <p>Loading roster...</p>
             </div>
         </div>
+        <button id="floatingEditBtn" class="floating-edit-btn hidden" onclick="triggerEditFromFloatingBtn()">
+            ✏️ Edit Selected Cell
+        </button>
     `;
 
     renderMonthButtons();
     loadRosterData();
+}
+
+function triggerEditFromFloatingBtn() {
+    if (rosterState.focusedCell) {
+        startEditing(rosterState.focusedCell);
+    }
 }
 
 function renderMonthButtons() {
@@ -169,6 +178,10 @@ function tryResolveName(val) {
 }
 
 function buildGrid() {
+    rosterState.focusedCell = null;
+    const btn = document.getElementById('floatingEditBtn');
+    if (btn) btn.classList.add('hidden');
+
     const grid = document.getElementById('gridContainer');
     const daysInMonth = new Date(rosterState.month.split('-')[0], rosterState.month.split('-')[1], 0).getDate();
 
@@ -249,10 +262,19 @@ function focusCell(el) {
     if (rosterState.focusedCell) rosterState.focusedCell.classList.remove('focused');
     rosterState.focusedCell = el;
     el.classList.add('focused');
+
+    const btn = document.getElementById('floatingEditBtn');
+    if (btn) {
+        btn.classList.remove('hidden');
+        // Let's reposition it or just let CSS put it at bottom center
+    }
 }
 
 function startEditing(el) {
     if (el.querySelector('input')) return; // Already editing
+
+    const btn = document.getElementById('floatingEditBtn');
+    if (btn) btn.classList.add('hidden');
 
     const currentVal = el.innerText.trim();
     el.innerHTML = '';
