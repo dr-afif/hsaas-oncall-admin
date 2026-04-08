@@ -170,7 +170,11 @@ async function loadContacts() {
             <td>${c.full_name}</td>
             <td>${c.phone_number || '-'}</td>
             <td>${c.position || '-'}</td>
-            <td>${c.active ? '✅' : '❌'}</td>
+            <td>
+                <label style="display:flex; align-items:center; cursor:pointer;">
+                    <input type="checkbox" ${c.active ? 'checked' : ''} onchange="toggleContactActive('${c.id}', this.checked)" style="width: 1.25rem; height: 1.25rem;">
+                </label>
+            </td>
             <td>
                 <div style="display:flex; gap: 0.5rem;">
                     <button class="btn btn-ghost" onclick="showContactModal('${c.id}')">Edit</button>
@@ -199,6 +203,16 @@ function updateBulkDeleteVisibility() {
         } else {
             btn.classList.add('hidden');
         }
+    }
+}
+
+async function toggleContactActive(id, isActive) {
+    const { error } = await sb.from('contacts').update({ active: isActive }).eq('id', id);
+    if (error) {
+        alert("Error updating status: " + error.message);
+        loadContacts(); // reload to revert checkbox
+    } else {
+        showNotification(isActive ? "Contact activated" : "Contact deactivated");
     }
 }
 
