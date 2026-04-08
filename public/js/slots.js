@@ -52,7 +52,7 @@ async function loadSlots() {
                     <button class="btn btn-ghost" onclick="showSlotModal('${s.id}')">Edit</button>
                     <button class="btn btn-ghost" onclick="moveSlot('${s.id}', 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
                     <button class="btn btn-ghost" onclick="moveSlot('${s.id}', 'down')" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
-                    <button class="btn btn-ghost" style="color:var(--danger)" onclick="deleteSlot('${s.id}', '${s.label.replace(/'/g, "\\'")}')">Delete</button>
+                    <button class="btn btn-ghost" style="color:var(--danger)" onclick="deleteSlot('${s.id}', '${s.label.replace(/'/g, "\\'")}', '${s.slot_key.replace(/'/g, "\\'")}')">Delete</button>
                 </div>
             </td>
         </tr>`;
@@ -60,11 +60,15 @@ async function loadSlots() {
     document.getElementById('slotsTable').innerHTML = html + `</tbody></table>`;
 }
 
-async function deleteSlot(id, label) {
+async function deleteSlot(id, label, slot_key) {
     if (!confirm(`Are you sure you want to delete the slot definition: ${label}?`)) return;
 
-    // Soft delete by setting active = false
-    const { error } = await sb.from('slot_definitions').update({ active: false }).eq('id', id);
+    // Soft delete by setting active = false, and append a suffix to the slot_key to free up the name for a new slot.
+    const suffix = Math.floor(Date.now() / 1000);
+    const { error } = await sb.from('slot_definitions').update({ 
+        active: false,
+        slot_key: `${slot_key}_del_${suffix}`
+    }).eq('id', id);
     if (error) {
         alert("Error deleting slot: " + error.message);
     } else {
