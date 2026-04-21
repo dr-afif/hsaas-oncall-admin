@@ -195,7 +195,15 @@ function buildGrid() {
 
     let html = `<table class="roster-table"><thead><tr><th class="date-col">Date</th>`;
     rosterState.columns.forEach(col => {
-        const title = col.slot.max_people > 1 ? `${col.slot.label} (${col.instance + 1})` : col.slot.label;
+        let title = col.slot.label;
+        if (col.slot.max_people > 1) {
+            const subLabel = col.slot.sub_labels && col.slot.sub_labels[col.instance] ? col.slot.sub_labels[col.instance] : '';
+            if (subLabel) {
+                title = `${col.slot.label}: ${subLabel}`;
+            } else {
+                title = `${col.slot.label} (${col.instance + 1})`;
+            }
+        }
         const isLastInstance = col.instance === (col.slot.max_people || 1) - 1;
         const boundaryClass = isLastInstance ? 'slot-boundary' : '';
         html += `<th class="${boundaryClass}">${title} ${col.slot.required ? '<span style="color:red">*</span>' : ''}</th>`;
@@ -538,9 +546,20 @@ function exportData() {
     const data = Object.values(rosterState.cells).map(c => {
         const slot = rosterState.slots.find(s => s.id === c.slot_definition_id);
         const contact = rosterState.contacts.find(con => con.id === c.contact_id);
+        
+        let slotDisplay = slot?.label || '';
+        if (slot && slot.max_people > 1) {
+            const subLabel = slot.sub_labels && slot.sub_labels[c.instance_index] ? slot.sub_labels[c.instance_index] : '';
+            if (subLabel) {
+                slotDisplay = `${slot.label}: ${subLabel}`;
+            } else {
+                slotDisplay = `${slot.label} (${c.instance_index + 1})`;
+            }
+        }
+
         return {
             date: c.date,
-            slot: slot?.label,
+            slot: slotDisplay,
             instance: c.instance_index + 1,
             contact: contact?.full_name,
             phone: contact?.phone_number

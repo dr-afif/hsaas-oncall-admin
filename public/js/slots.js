@@ -115,10 +115,11 @@ async function moveSlot(id, direction) {
 }
 
 async function showSlotModal(id = null) {
-    let slot = { slot_key: '', label: '', required: false, max_people: 1, effective_from_month: document.getElementById('slotMonth').value, effective_to_month: '' };
+    let slot = { slot_key: '', label: '', required: false, max_people: 1, effective_from_month: document.getElementById('slotMonth').value, effective_to_month: '', sub_labels: [] };
     if (id) {
         const { data } = await sb.from('slot_definitions').select('*').eq('id', id).single();
         slot = data;
+        if (!slot.sub_labels) slot.sub_labels = [];
     }
 
     const modal = document.getElementById('modalContent');
@@ -136,13 +137,14 @@ async function showSlotModal(id = null) {
             <div style="display:flex; gap: 1rem; margin-bottom: 1rem;">
                 <div style="flex:1">
                     <label>Max People per Slot</label>
-                    <input type="number" name="max_people" value="${slot.max_people}" min="1" required>
+                    <input type="number" id="maxPeopleInput" name="max_people" value="${slot.max_people}" min="1" required oninput="renderSubLabels()">
                 </div>
                 <div style="flex:1">
                     <label>Effective From (YYYY-MM)</label>
                     <input type="text" name="effective_from_month" value="${slot.effective_from_month}" required>
                 </div>
             </div>
+            <div id="subLabelsContainer" style="margin-bottom: 1rem;"></div>
             <div style="display:flex; gap: 1rem; margin-bottom: 1rem;">
                 <label><input type="checkbox" name="required" ${slot.required ? 'checked' : ''}> Required</label>
             </div>
@@ -152,6 +154,31 @@ async function showSlotModal(id = null) {
             </div>
         </form>
     `;
+
+    window.renderSubLabels = () => {
+        const maxInput = document.getElementById('maxPeopleInput');
+        const count = parseInt(maxInput.value) || 1;
+        const container = document.getElementById('subLabelsContainer');
+        
+        // Preserve existing values before re-rendering
+        const currentInputs = Array.from(container.querySelectorAll('input[name="sub_labels[]"]'));
+        const currentValues = currentInputs.map(input => input.value);
+        
+        let html = '';
+        if (count > 1) {
+            html += `<label>Optional Sub-labels (e.g. Blood, Urine)</label><div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">`;
+            for (let i = 0; i < count; i++) {
+                // Pre-fill with existing typed value, or from DB slot data
+                const val = currentValues[i] !== undefined ? currentValues[i] : (slot.sub_labels[i] || '');
+                html += `<input type="text" name="sub_labels[]" placeholder="Slot ${i + 1} Title" value="${val.replace(/"/g, '&quot;')}">`;
+            }
+            html += `</div>`;
+        }
+        container.innerHTML = html;
+    };
+    
+    // Initial render
+    setTimeout(window.renderSubLabels, 10);
 
     document.getElementById('modalOverlay').style.display = 'flex';
     document.getElementById('slotForm').onsubmit = async (e) => {
@@ -163,6 +190,17 @@ async function showSlotModal(id = null) {
         const data = Object.fromEntries(fd.entries());
         data.required = fd.get('required') === 'on';
         data.department_id = state.activeDeptId;
+        
+        // Collect sub labels array
+        const subLabelInputs = e.target.querySelectorAll('input[name="sub_labels[]"]');
+        if (subLabelInputs.length > 0) {
+            data.sub_labels = Array.from(subLabelInputs).map(i => i.value.trim());
+        } else {
+            data.sub_labels = [];
+        }
+        
+        // Cleanup sub_labels from regular Object.fromEntries which might be a comma-separated string
+        delete data['sub_labels[]'];
 
         if (!id) {
             // New slot: put at the end

@@ -61,6 +61,7 @@ CREATE TABLE slot_definitions (
     order_index INT NOT NULL DEFAULT 0,
     required BOOLEAN DEFAULT false,
     max_people INT NOT NULL DEFAULT 1,
+    sub_labels JSONB DEFAULT '[]'::jsonb,
     effective_from_month TEXT NOT NULL, -- "YYYY-MM"
     effective_to_month TEXT, -- "YYYY-MM"
     active BOOLEAN DEFAULT true,
