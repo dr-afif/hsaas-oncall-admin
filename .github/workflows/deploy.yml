@@ -12,7 +12,7 @@ jobs:
 
       - name: Inject Secrets into config.js
         run: |
-          echo "const CONFIG = {" > public/js/config.js
+          echo "window.APP_CONFIG = {" > public/js/config.js
           echo "    SUPABASE_URL: '${{ secrets.SUPABASE_URL }}'," >> public/js/config.js
           echo "    SUPABASE_ANON_KEY: '${{ secrets.SUPABASE_ANON_KEY }}'," >> public/js/config.js
           echo "};" >> public/js/config.js
