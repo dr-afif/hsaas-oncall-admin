@@ -75,4 +75,4 @@ Changes you make to the roster are kept in your browser until you save them.
 
 ### Tips & Resources
 - Use **Export JSON** on the Roster tab to download a raw data copy of the month's schedule.
-- Pay attention to the **Holidays** marked in green on the roster, which may affect your coverage needs.
+- Pay attention to the **Holidays** marked in red on the roster, which may affect your coverage needs.
