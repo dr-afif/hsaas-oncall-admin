@@ -564,7 +564,7 @@ input[type="checkbox"] {
     .nav-container {
         position: fixed;
         top: 0;
-        left: -280px;
+        left: 0;
         width: 280px;
         height: 100vh;
         background: var(--card-bg);
@@ -574,12 +574,13 @@ input[type="checkbox"] {
         justify-content: flex-start;
         align-items: stretch;
         padding: 2rem 1.5rem;
+        transform: translateX(-100%);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         gap: 1.5rem;
     }
     
     .nav-container.drawer-open {
-        transform: translateX(280px);
+        transform: translateX(0);
     }
 
     .drawer-overlay {
@@ -590,13 +591,14 @@ input[type="checkbox"] {
         bottom: 0;
         background: rgba(0,0,0,0.5);
         z-index: 1999;
-        display: block;
+        display: none;
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease;
     }
     
     .drawer-overlay.drawer-open {
+        display: block;
         opacity: 1;
         visibility: visible;
     }
@@ -655,14 +657,18 @@ input[type="checkbox"] {
     }
 
     .sticky-roster-actions > div:last-child {
-        flex-direction: column;
-        align-items: stretch !important;
+        flex-direction: row;
+        flex-wrap: wrap;
         width: 100%;
+        gap: 0.5rem;
+        justify-content: flex-start;
     }
 
     .sticky-roster-actions .btn {
-        width: 100%;
-        margin-bottom: 0.5rem;
+        width: auto !important;
+        flex: 1 1 auto;
+        margin-bottom: 0;
+        padding: 0.5rem;
     }
 
     /* Narrow cell padding */
