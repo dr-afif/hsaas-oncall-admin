@@ -10,34 +10,37 @@ const state = {
 async function init() {
     const session = await initAuth();
     if (!session) {
-        // window.location.href = 'login.html';
-        console.log("No session, but bypassing for test");
-        // return;
+        window.location.href = 'login.html';
+        return;
     }
 
     state.user = session.user;
 
     // Fetch account info
-    // const { data: members, error } = await sb
-    //     .from('department_members')
-    //     .select('*, departments(*)')
-    //     .eq('email', state.user.email.toLowerCase())
-    //     .single();
+    const { data: members, error } = await sb
+        .from('department_members')
+        .select('*, departments(*)')
+        .eq('email', state.user.email.toLowerCase())
+        .single();
 
-    // if (error || !members || !members.active) {
-    //     alert("Access denied. Your email is not registered or is inactive.");
-    //     logout();
-    //     return;
-    // }
+    if (error || !members || !members.active) {
+        alert("Access denied. Your email is not registered or is inactive.");
+        logout();
+        return;
+    }
 
-    state.membership = { role: 'ADMIN', departments: { name: 'Emergency' } };
-    state.activeDeptId = 'mock_dept';
+    state.membership = members;
+    state.activeDeptId = localStorage.getItem('activeDeptId') || members.department_id;
 
-    document.getElementById('userEmail').innerText = `test@example.com (ADMIN)`;
+    document.getElementById('userEmail').innerText = `${state.user.email} (${members.role})`;
 
-    document.querySelector('[data-view="admin"]').classList.remove('hidden');
-    document.getElementById('admin-dept-switcher').classList.remove('hidden');
-    // await loadDeptsForAdmin();
+    if (members.role === 'ADMIN') {
+        document.querySelector('[data-view="admin"]').classList.remove('hidden');
+        document.getElementById('admin-dept-switcher').classList.remove('hidden');
+        await loadDeptsForAdmin();
+    } else {
+        document.getElementById('activeDeptName').innerText = members.departments?.name || '';
+    }
 
     window.addEventListener('hashchange', handleRoute);
     handleRoute();
