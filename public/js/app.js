@@ -114,4 +114,31 @@ function showNotification(msg, type = 'success') {
     }, 3000);
 }
 
+async function showHelpModal() {
+    document.getElementById('modalOverlay').style.display = 'flex';
+    document.getElementById('modalContent').innerHTML = `
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0;">Help Guide</h2>
+            <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+        </div>
+        <div id="helpGuideContent" style="max-height: 70vh; overflow-y: auto; padding-right: 1rem; line-height: 1.6; font-size: 0.95rem;">
+            Loading guide...
+        </div>
+    `;
+
+    try {
+        const response = await fetch('USER_GUIDE.md'); 
+        if (!response.ok) throw new Error("Could not find the guide.");
+        let text = await response.text();
+        
+        if (typeof marked !== 'undefined') {
+            document.getElementById('helpGuideContent').innerHTML = marked.parse(text);
+        } else {
+            document.getElementById('helpGuideContent').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${text}</pre>`;
+        }
+    } catch (err) {
+        document.getElementById('helpGuideContent').innerHTML = `<p class="error" style="color: red;">${err.message}</p>`;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', init);

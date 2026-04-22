@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body>
@@ -21,6 +22,7 @@
                     <a href="#slots" data-view="slots">Slot Types</a>
                     <a href="#audit" data-view="audit">Audit</a>
                     <a href="#admin" data-view="admin" class="hidden">Admin</a>
+                    <a href="#" onclick="showHelpModal(); return false;">Help</a>
                 </nav>
             </div>
             <div id="activeDeptName" class="dept-title"></div>
