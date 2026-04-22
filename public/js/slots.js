@@ -28,7 +28,7 @@ async function loadSlots() {
         .or(`effective_to_month.is.null,effective_to_month.gte.${month}`)
         .order('order_index');
 
-    let html = `<table style="width:100%; text-align:left; border-collapse: collapse;">
+    let html = `<div class="table-responsive"><table class="admin-table" style="width:100%; text-align:left; border-collapse: collapse;">
         <thead><tr style="border-bottom: 2px solid var(--border)">
             <th style="padding: 1rem">Key</th>
             <th style="padding: 1rem">Label</th>
@@ -57,7 +57,7 @@ async function loadSlots() {
             </td>
         </tr>`;
     });
-    document.getElementById('slotsTable').innerHTML = html + `</tbody></table>`;
+    document.getElementById('slotsTable').innerHTML = html + `</tbody></table></div>`;
 }
 
 async function deleteSlot(id, label, slot_key) {

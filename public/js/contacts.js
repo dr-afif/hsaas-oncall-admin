@@ -152,7 +152,7 @@ async function loadContacts() {
     const { data } = await sb.from('contacts')
         .select('*').eq('department_id', state.activeDeptId).order('short_name');
 
-    let html = `<table class="admin-table">
+    let html = `<div class="table-responsive"><table class="admin-table">
         <thead><tr>
             <th style="width: 40px;"><input type="checkbox" id="selectAllContacts" onclick="toggleAllContacts(this)"></th>
             <th>Short Name</th>
@@ -183,7 +183,7 @@ async function loadContacts() {
             </td>
         </tr>`;
     });
-    document.getElementById('contactsTable').innerHTML = html + `</tbody></table>`;
+    document.getElementById('contactsTable').innerHTML = html + `</tbody></table></div>`;
     updateBulkDeleteVisibility();
 }
 

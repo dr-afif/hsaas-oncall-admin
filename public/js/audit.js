@@ -13,7 +13,7 @@ async function renderAudit() {
         .order('ts', { ascending: false })
         .limit(100);
 
-    let html = `<table class="admin-table">
+    let html = `<div class="table-responsive"><table class="admin-table">
         <thead><tr>
             <th class="date-col">Time</th>
             <th>Actor</th>
@@ -31,5 +31,5 @@ async function renderAudit() {
             <td><pre style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${JSON.stringify(log.after_json || log.before_json)}</pre></td>
         </tr>`;
     });
-    document.getElementById('auditLog').innerHTML = html + `</tbody></table>`;
+    document.getElementById('auditLog').innerHTML = html + `</tbody></table></div>`;
 }

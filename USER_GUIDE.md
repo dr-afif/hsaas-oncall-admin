@@ -25,8 +25,7 @@ Before you can build a roster, you need a pool of people to assign.
    - **Full Name**: The official name.
    - **Short Name**: A clear, unique short name (e.g., "Dr. Alice"). This is the name you will typically type into the roster.
    - **Phone Number**: Their contact number. Enter it without spaces (e.g., `0123456789`). This allows the public viewer to generate clickable WhatsApp and Phone Call links.
-3. **Aliases**: If a doctor goes by multiple names (e.g., "Alice" and "Dr Alice"), you can click **Manage Aliases** on their card to add alternate names. The system will automatically recognize these aliases when you type them into the roster.
-4. **Deactivating**: If a doctor leaves the department, you can edit their profile and turn off the "Active" switch. They will be hidden from new lists but kept in the database to preserve historical rosters.
+3. **Deactivating**: If a doctor leaves the department, you can edit their profile and turn off the "Active" switch. They will be hidden from new lists but kept in the database to preserve historical rosters.
 
 ---
 
