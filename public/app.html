@@ -14,8 +14,26 @@
 <body>
     <div class="app-container">
         <header>
-            <div style="display: flex; align-items: center; gap: 2rem;">
-                <h2 style="margin:0; color: var(--primary);">HSAAS Roster</h2>
+            <div class="header-left">
+                <button id="hamburgerBtn" class="hamburger-btn" onclick="toggleMobileDrawer()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div class="header-title-group">
+                    <h2 style="margin:0; color: var(--primary);">HSAAS Roster</h2>
+                    <span id="activeDeptName" class="dept-title-inline"></span>
+                </div>
+            </div>
+            
+            <div id="drawerOverlay" class="drawer-overlay" onclick="toggleMobileDrawer()"></div>
+            
+            <div id="navContainer" class="nav-container">
+                <div class="user-info">
+                    <div id="admin-dept-switcher" class="hidden">
+                        <select id="activeDeptId"></select>
+                    </div>
+                    <span id="userEmail" class="user-email-text"></span>
+                    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+                </div>
                 <nav id="mainNav">
                     <a href="#roster" data-view="roster">Roster</a>
                     <a href="#contacts" data-view="contacts">Contacts</a>
@@ -24,14 +42,6 @@
                     <a href="#admin" data-view="admin" class="hidden">Admin</a>
                     <a href="#" onclick="showHelpModal(); return false;">Help</a>
                 </nav>
-            </div>
-            <div id="activeDeptName" class="dept-title"></div>
-            <div class="user-info">
-                <div id="admin-dept-switcher" class="hidden">
-                    <select id="activeDeptId"></select>
-                </div>
-                <span id="userEmail"></span>
-                <button class="btn btn-ghost" onclick="logout()">Logout</button>
             </div>
         </header>
 

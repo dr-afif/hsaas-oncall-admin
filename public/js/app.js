@@ -141,4 +141,25 @@ async function showHelpModal() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+function toggleMobileDrawer() {
+    const navContainer = document.getElementById('navContainer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (!navContainer || !overlay) return;
+    
+    navContainer.classList.toggle('drawer-open');
+    overlay.classList.toggle('drawer-open');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    
+    // Auto-close drawer on mobile when clicking a link
+    document.querySelectorAll('#mainNav a').forEach(a => {
+        a.addEventListener('click', () => {
+            const navContainer = document.getElementById('navContainer');
+            if (navContainer && navContainer.classList.contains('drawer-open')) {
+                toggleMobileDrawer();
+            }
+        });
+    });
+});
