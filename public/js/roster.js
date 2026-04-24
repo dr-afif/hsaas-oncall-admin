@@ -51,6 +51,13 @@ function renderMonthButtons() {
     const start = new Date(today.getFullYear(), today.getMonth() - 2, 1); // 2 months back
 
     let html = '';
+    
+    // 1. Add explicit month picker
+    html += `<input type="month" class="month-btn" style="padding: 0.35rem 0.5rem; outline: none;" title="Select any month" value="${rosterState.month}" onchange="if(this.value) setRosterMonth(this.value)">`;
+
+    let activeIncluded = false;
+
+    // 2. Add standard rolling 12 months
     for (let i = 0; i < 12; i++) {
         const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
         const year = d.getFullYear();
@@ -59,9 +66,19 @@ function renderMonthButtons() {
 
         const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
         const isActive = val === rosterState.month;
+        if (isActive) activeIncluded = true;
 
         html += `<button class="month-btn ${isActive ? 'active' : ''}" onclick="setRosterMonth('${val}')">${label}</button>`;
     }
+
+    // 3. If selected month is outside the 12-month window, append a button for it manually
+    if (!activeIncluded && rosterState.month) {
+        const [y, m] = rosterState.month.split('-');
+        const d = new Date(y, m - 1, 1);
+        const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        html += `<button class="month-btn active" onclick="setRosterMonth('${rosterState.month}')">${label}</button>`;
+    }
+
     selector.innerHTML = html;
 
     // Scroll active into view
