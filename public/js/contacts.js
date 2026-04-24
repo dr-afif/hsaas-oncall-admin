@@ -171,8 +171,8 @@ async function loadContacts() {
             <td>${c.phone_number || '-'}</td>
             <td>${c.position || '-'}</td>
             <td>
-                <label style="display:flex; align-items:center; cursor:pointer;">
-                    <input type="checkbox" ${c.active ? 'checked' : ''} onchange="toggleContactActive('${c.id}', this.checked)" style="width: 1.25rem; height: 1.25rem;">
+                <label class="switch">
+                    <input type="checkbox" ${c.active ? 'checked' : ''} onchange="toggleContactActive('${c.id}', this.checked)">
                 </label>
             </td>
             <td>
@@ -300,9 +300,13 @@ async function showContactModal(id = null) {
                     <option value="Consultant" ${contact.position === 'Consultant' ? 'selected' : ''}>Consultant</option>
                 </select>
             </div>
-            <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                <input type="checkbox" name="active" id="contactActive" ${contact.active ? 'checked' : ''} style="width: auto;">
-                <label for="contactActive">Active (Uncheck to hide from roster selection)</label>
+            <div style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                <label class="switch">
+                    <input type="checkbox" name="active" id="contactActive" ${contact.active ? 'checked' : ''}>
+                </label>
+                <label for="contactActive" style="margin: 0; cursor: pointer; line-height: 1.2;">
+                    Active<br><small style="color: var(--text-muted); font-weight: normal;">Uncheck to hide from roster selection</small>
+                </label>
             </div>
             <div style="display:flex; justify-content: flex-end; gap: 1rem;">
                 <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>

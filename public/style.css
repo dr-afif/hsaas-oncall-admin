@@ -690,3 +690,42 @@ input[type="checkbox"] {
 .table-responsive .admin-table {
     margin-bottom: 0;
 }
+
+/* Custom Toggle Switch (From Uiverse.io by nikk7007) */
+.switch {
+ --false: #E81B1B;
+ --true: #009068;
+ display: inline-block;
+}
+
+.switch input[type="checkbox"] {
+ appearance: none;
+ -webkit-appearance: none;
+ height: 2rem;
+ width: 3.5rem;
+ background-color: #fff;
+ position: relative;
+ border-radius: .2em;
+ cursor: pointer;
+ border: 1px solid var(--border);
+ margin: 0;
+}
+
+.switch input[type="checkbox"]::before {
+ content: '';
+ display: block;
+ height: 1.6em; /* Slightly smaller to fit inside border */
+ width: 1.6em;
+ transform: translate(-50%, -50%);
+ position: absolute;
+ top: 50%;
+ left: calc(1.6em/2 + .2em);
+ background-color: var(--false);
+ border-radius: .2em;
+ transition: .3s ease;
+}
+
+.switch input[type="checkbox"]:checked::before {
+ background-color: var(--true);
+ left: calc(100% - (1.6em/2 + .2em));
+}
