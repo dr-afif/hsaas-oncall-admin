@@ -333,20 +333,97 @@ function startEditing(el) {
     };
 
     input.onkeydown = (e) => {
-        if (e.key === 'Enter') input.blur();
-        if (e.key === 'Escape') {
+        if (e.key === 'Enter' || e.key === 'Tab') {
+            e.preventDefault();
+            const val = input.value.trim();
+            const date = el.dataset.date;
+            const slotId = el.dataset.slotId;
+            const instance = el.dataset.instance;
+            
+            input.onblur = null; // prevent double update
+            updateCell(el, val, true);
+            
+            if (e.key === 'Tab' && e.shiftKey) {
+                moveFocusToNextCell(date, slotId, instance, 'left');
+            } else if (e.key === 'Enter' && e.shiftKey) {
+                moveFocusToNextCell(date, slotId, instance, 'up');
+            } else {
+                moveFocusToNextCell(date, slotId, instance, e.key === 'Enter' ? 'down' : 'right');
+            }
+        } else if (e.key === 'Escape') {
             input.value = currentVal;
             input.blur();
         }
     };
 }
 
+function moveFocusToNextCell(currentDate, currentSlotId, currentInstance, direction) {
+    let targetDate = currentDate;
+    let targetColIdx = rosterState.columns.findIndex(c => c.slot.id === currentSlotId && String(c.instance) === String(currentInstance));
+
+    if (direction === 'down') {
+        targetDate = addDays(currentDate, 1);
+    } else if (direction === 'up') {
+        targetDate = addDays(currentDate, -1);
+    } else if (direction === 'right') {
+        targetColIdx += 1;
+        if (targetColIdx >= rosterState.columns.length) {
+            targetColIdx = 0;
+            targetDate = addDays(currentDate, 1);
+        }
+    } else if (direction === 'left') {
+        targetColIdx -= 1;
+        if (targetColIdx < 0) {
+            targetColIdx = rosterState.columns.length - 1;
+            targetDate = addDays(currentDate, -1);
+        }
+    }
+
+    if (new Date(targetDate).getMonth() !== new Date(currentDate).getMonth()) return;
+
+    const col = rosterState.columns[targetColIdx];
+    if (col) {
+        setTimeout(() => {
+            const nextEl = document.querySelector(`[data-date="${targetDate}"][data-slot-id="${col.slot.id}"][data-instance="${col.instance}"]`);
+            if (nextEl) {
+                focusCell(nextEl);
+                nextEl.focus();
+            }
+        }, 10);
+    }
+}
+
 async function handleCellKey(e, el) {
     if (e.key === 'Enter') {
         e.preventDefault();
         startEditing(el);
+    } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        moveFocusToNextCell(el.dataset.date, el.dataset.slotId, el.dataset.instance, 'down');
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        moveFocusToNextCell(el.dataset.date, el.dataset.slotId, el.dataset.instance, 'up');
+    } else if (e.key === 'ArrowRight' || e.key === 'Tab') {
+        e.preventDefault();
+        if (e.key === 'Tab' && e.shiftKey) {
+            moveFocusToNextCell(el.dataset.date, el.dataset.slotId, el.dataset.instance, 'left');
+        } else {
+            moveFocusToNextCell(el.dataset.date, el.dataset.slotId, el.dataset.instance, 'right');
+        }
+    } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        moveFocusToNextCell(el.dataset.date, el.dataset.slotId, el.dataset.instance, 'left');
+    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        updateCell(el, '', true);
+        setTimeout(() => {
+            const nextEl = document.querySelector(`[data-date="${el.dataset.date}"][data-slot-id="${el.dataset.slotId}"][data-instance="${el.dataset.instance}"]`);
+            if (nextEl) {
+                focusCell(nextEl);
+                nextEl.focus();
+            }
+        }, 10);
     } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-        // Just start typing
         startEditing(el);
     }
 }
