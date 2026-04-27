@@ -4,7 +4,8 @@
   "description": "Hospital Oncall Roster Manager",
   "scripts": {
     "start": "npx serve public",
-    "build": "node scripts/build-config.js"
+    "build": "node scripts/build-config.js",
+    "check": "node scripts/check.js"
   },
   "dependencies": {},
   "devDependencies": {

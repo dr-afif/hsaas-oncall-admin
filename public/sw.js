@@ -1,10 +1,11 @@
-const CACHE_NAME = 'hsaas-roster-admin-v1';
+const CACHE_NAME = 'hsaas-roster-admin-v2';
 
 const ASSETS_TO_CACHE = [
     './',
     './login.html',
     './app.html',
     './style.css',
+    './js/utils.js',
     './js/app.js',
     './js/admin.js',
     './js/audit.js',

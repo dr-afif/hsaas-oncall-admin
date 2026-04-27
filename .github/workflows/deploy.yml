@@ -10,12 +10,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Inject Secrets into config.js
-        run: |
-          echo "window.APP_CONFIG = {" > public/js/config.js
-          echo "    SUPABASE_URL: '${{ secrets.SUPABASE_URL }}'," >> public/js/config.js
-          echo "    SUPABASE_ANON_KEY: '${{ secrets.SUPABASE_ANON_KEY }}'," >> public/js/config.js
-          echo "};" >> public/js/config.js
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate static app
+        run: npm run check
+
+      - name: Build runtime config
+        run: npm run build
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Publish to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

@@ -7,16 +7,6 @@ const state = {
     view: 'roster'
 };
 
-function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-    }[ch]));
-}
-
 async function init() {
     const session = await initAuth();
     if (!session) {
