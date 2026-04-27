@@ -57,6 +57,13 @@ A modern, vanilla JS application for managing hospital oncall rosters.
 1.  Serve the `public` directory using a local web server (e.g., `npm run dev` or VS Code Live Server).
 2.  Navigate to `/login.html`.
 
+### 6. Pre-push Checks
+Run the static repository checks before pushing changes:
+
+```bash
+npm run check
+```
+
 ## Key Features
 -   **Excel-like Paste**: Supports copying multi-column data from Excel/Word and pasting directly into the grid.
 -   **Optimistic Locking**: Prevents overwriting changes if two people edit the same roster simultaneously.

@@ -20,13 +20,18 @@ async function renderSlots() {
 async function loadSlots() {
     if (!state.activeDeptId) return;
     const month = document.getElementById('slotMonth').value;
-    const { data } = await sb.from('slot_definitions')
+    const { data, error } = await sb.from('slot_definitions')
         .select('*')
         .eq('department_id', state.activeDeptId)
         .eq('active', true)
         .lte('effective_from_month', month)
         .or(`effective_to_month.is.null,effective_to_month.gte.${month}`)
         .order('order_index');
+
+    if (error) {
+        renderError('slotsTable', `Error loading slots: ${error.message}`);
+        return;
+    }
 
     let html = `<div class="table-responsive"><table class="admin-table" style="width:100%; text-align:left; border-collapse: collapse;">
         <thead><tr style="border-bottom: 2px solid var(--border)">
@@ -38,9 +43,9 @@ async function loadSlots() {
             <th style="padding: 1rem">Actions</th>
         </tr></thead><tbody>`;
 
-    data.forEach((s, idx) => {
+    (data || []).forEach((s, idx) => {
         const isFirst = idx === 0;
-        const isLast = idx === data.length - 1;
+        const isLast = idx === (data || []).length - 1;
         html += `<tr style="border-bottom: 1px solid var(--border)">
             <td style="padding: 1rem">${escapeHTML(s.slot_key)}</td>
             <td style="padding: 1rem">${escapeHTML(s.label)}</td>
@@ -86,19 +91,23 @@ async function deleteSlot(id) {
 
 async function moveSlot(id, direction) {
     const month = document.getElementById('slotMonth').value;
-    const { data: slots } = await sb.from('slot_definitions')
+    const { data: slots, error } = await sb.from('slot_definitions')
         .select('*')
         .eq('department_id', state.activeDeptId)
         .eq('active', true)
         .lte('effective_from_month', month)
         .or(`effective_to_month.is.null,effective_to_month.gte.${month}`)
         .order('order_index', { ascending: true });
+    if (error) {
+        alert("Error loading slots for reorder: " + error.message);
+        return;
+    }
 
-    const idx = slots.findIndex(s => s.id === id);
+    const idx = (slots || []).findIndex(s => s.id === id);
     if (idx === -1) return;
 
     let targetIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= slots.length) return;
+    if (targetIdx < 0 || targetIdx >= (slots || []).length) return;
 
     const current = slots[idx];
     const target = slots[targetIdx];
@@ -124,7 +133,11 @@ async function moveSlot(id, direction) {
 async function showSlotModal(id = null) {
     let slot = { slot_key: '', label: '', required: false, max_people: 1, effective_from_month: document.getElementById('slotMonth').value, effective_to_month: '', sub_labels: [] };
     if (id) {
-        const { data } = await sb.from('slot_definitions').select('*').eq('id', id).single();
+        const { data, error } = await sb.from('slot_definitions').select('*').eq('id', id).single();
+        if (error || !data) {
+            alert("Error loading slot: " + (error?.message || "Slot not found"));
+            return;
+        }
         slot = data;
         if (!slot.sub_labels) slot.sub_labels = [];
     }
@@ -211,11 +224,15 @@ async function showSlotModal(id = null) {
 
         if (!id) {
             // New slot: put at the end
-            const { data: existing } = await sb.from('slot_definitions')
+            const { data: existing, error: existingError } = await sb.from('slot_definitions')
                 .select('order_index')
                 .eq('department_id', state.activeDeptId)
                 .order('order_index', { ascending: false })
                 .limit(1);
+            if (existingError) {
+                alert("Error checking slot order: " + existingError.message);
+                return;
+            }
             data.order_index = (existing && existing.length > 0) ? (existing[0].order_index + 1) : 0;
         }
 
@@ -240,14 +257,18 @@ async function copySlots() {
 
     if (!confirm(`Copy slots from ${prevMonth} to ${currentMonth}?`)) return;
 
-    const { data: prevSlots } = await sb.from('slot_definitions')
+    const { data: prevSlots, error } = await sb.from('slot_definitions')
         .select('*')
         .eq('department_id', state.activeDeptId)
         .eq('active', true)
         .lte('effective_from_month', prevMonth)
         .or(`effective_to_month.is.null,effective_to_month.gte.${prevMonth}`);
+    if (error) {
+        alert("Error loading previous month slots: " + error.message);
+        return;
+    }
 
-    for (const s of prevSlots) {
+    for (const s of (prevSlots || [])) {
         const { id, created_at, updated_at, ...payload } = s;
         payload.effective_from_month = currentMonth;
         await sb.from('slot_definitions').insert(payload);

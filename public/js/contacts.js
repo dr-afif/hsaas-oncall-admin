@@ -19,7 +19,11 @@ async function renderContacts() {
 
 async function showBulkContactModal() {
     // 1. Fetch existing contacts for duplicate checking
-    const { data: existing } = await sb.from('contacts').select('short_name').eq('department_id', state.activeDeptId);
+    const { data: existing, error: existingError } = await sb.from('contacts').select('short_name').eq('department_id', state.activeDeptId);
+    if (existingError) {
+        alert("Error loading existing contacts: " + existingError.message);
+        return;
+    }
     const existingShortNames = new Set((existing || []).map(c => c.short_name.toLowerCase()));
 
     const modal = document.getElementById('modalContent');
@@ -149,8 +153,13 @@ async function showBulkContactModal() {
 
 async function loadContacts() {
     if (!state.activeDeptId) return;
-    const { data } = await sb.from('contacts')
+    const { data, error } = await sb.from('contacts')
         .select('*').eq('department_id', state.activeDeptId).order('short_name');
+
+    if (error) {
+        renderError('contactsTable', `Error loading contacts: ${error.message}`);
+        return;
+    }
 
     let html = `<div class="table-responsive"><table class="admin-table">
         <thead><tr>
@@ -163,7 +172,7 @@ async function loadContacts() {
             <th>Actions</th>
         </tr></thead><tbody>`;
 
-    data.forEach(c => {
+    (data || []).forEach(c => {
         html += `<tr>
             <td><input type="checkbox" class="contact-checkbox" data-id="${c.id}" onclick="updateBulkDeleteVisibility()"></td>
             <td>${escapeHTML(c.short_name)}</td>
@@ -250,7 +259,11 @@ async function deleteSelectedContacts() {
     if (!confirm(`Delete ${ids.length} selected contacts? This will un-link them from the roster but keep their names visible as text. Continue?`)) return;
 
     // 1. Get names for all contacts to preserve them
-    const { data: contacts } = await sb.from('contacts').select('id, short_name').in('id', ids);
+    const { data: contacts, error: loadError } = await sb.from('contacts').select('id, short_name').in('id', ids);
+    if (loadError) {
+        alert("Error loading selected contacts: " + loadError.message);
+        return;
+    }
 
     // 2. Update roster cells in bulk (one name at a time since they differ)
     // We do this in parallel for speed
@@ -276,7 +289,11 @@ async function deleteSelectedContacts() {
 async function showContactModal(id = null) {
     let contact = { short_name: '', full_name: '', phone_number: '', position: '', active: true };
     if (id) {
-        const { data } = await sb.from('contacts').select('*').eq('id', id).single();
+        const { data, error } = await sb.from('contacts').select('*').eq('id', id).single();
+        if (error || !data) {
+            alert("Error loading contact: " + (error?.message || "Contact not found"));
+            return;
+        }
         contact = data;
     }
 

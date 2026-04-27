@@ -69,6 +69,10 @@ if (!fs.existsSync(path.join(root, 'sql/09_performance_indexes.sql'))) {
     fail('sql/09_performance_indexes.sql: missing optional performance index script');
 }
 
+if (!fs.existsSync(path.join(root, 'sql/README.md'))) {
+    fail('sql/README.md: missing SQL setup guide');
+}
+
 if (read('scripts/build-config.js').includes('app_config.js')) {
     fail('scripts/build-config.js: must generate public/js/config.js, not app_config.js');
 }

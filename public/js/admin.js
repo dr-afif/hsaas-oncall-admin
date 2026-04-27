@@ -36,35 +36,46 @@ async function loadAdminData() {
         sb.from('department_members').select('*').order('email')
     ]);
 
+    if (depts.error) {
+        renderError('deptsAdmin', `Error loading departments: ${depts.error.message}`);
+    }
+
+    if (members.error) {
+        renderError('membersAdmin', `Error loading members: ${members.error.message}`);
+    }
+
     // Render Departments
-    let dHtml = `<table class="admin-table">
+    if (!depts.error) {
+        let dHtml = `<table class="admin-table">
         <thead><tr>
             <th>ID (Code)</th>
             <th>Name</th>
             <th>Active</th>
             <th>Actions</th>
         </tr></thead><tbody>`;
-    depts.data.forEach((d, idx) => {
-        const isFirst = idx === 0;
-        const isLast = idx === depts.data.length - 1;
-        const deptArg = encodeURIComponent(d.id);
-        dHtml += `<tr>
-            <td>${escapeHTML(d.id)}</td>
-            <td>${escapeHTML(d.name)}</td>
-            <td>${d.active ? '✅' : '❌'}</td>
-            <td>
-                <div style="display:flex; gap: 0.5rem;">
-                    <button class="btn btn-ghost" onclick="showDeptModal(decodeURIComponent('${deptArg}'))">Edit</button>
-                    <button class="btn btn-ghost" onclick="moveDepartment(decodeURIComponent('${deptArg}'), 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
-                    <button class="btn btn-ghost" onclick="moveDepartment(decodeURIComponent('${deptArg}'), 'down')" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
-                </div>
-            </td>
-        </tr>`;
-    });
-    document.getElementById('deptsAdmin').innerHTML = dHtml + `</tbody></table>`;
+        (depts.data || []).forEach((d, idx) => {
+            const isFirst = idx === 0;
+            const isLast = idx === (depts.data || []).length - 1;
+            const deptArg = encodeURIComponent(d.id);
+            dHtml += `<tr>
+                <td>${escapeHTML(d.id)}</td>
+                <td>${escapeHTML(d.name)}</td>
+                <td>${d.active ? '✅' : '❌'}</td>
+                <td>
+                    <div style="display:flex; gap: 0.5rem;">
+                        <button class="btn btn-ghost" onclick="showDeptModal(decodeURIComponent('${deptArg}'))">Edit</button>
+                        <button class="btn btn-ghost" onclick="moveDepartment(decodeURIComponent('${deptArg}'), 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
+                        <button class="btn btn-ghost" onclick="moveDepartment(decodeURIComponent('${deptArg}'), 'down')" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('deptsAdmin').innerHTML = dHtml + `</tbody></table>`;
+    }
 
     // Render Members
-    let mHtml = `<table class="admin-table">
+    if (!members.error) {
+        let mHtml = `<table class="admin-table">
         <thead><tr>
             <th>Email</th>
             <th>Role</th>
@@ -72,22 +83,27 @@ async function loadAdminData() {
             <th>Active</th>
             <th>Actions</th>
         </tr></thead><tbody>`;
-    members.data.forEach(m => {
-        const emailArg = encodeURIComponent(m.email);
-        mHtml += `<tr>
-            <td>${escapeHTML(m.email)}</td>
-            <td>${escapeHTML(m.role)}</td>
-            <td>${escapeHTML(m.department_id || 'N/A')}</td>
-            <td>${m.active ? '✅' : '❌'}</td>
-            <td>
-                <button class="btn btn-ghost" onclick="showMemberModal(decodeURIComponent('${emailArg}'))">Edit</button>
-            </td>
-        </tr>`;
-    });
-    document.getElementById('membersAdmin').innerHTML = mHtml + `</tbody></table>`;
+        (members.data || []).forEach(m => {
+            const emailArg = encodeURIComponent(m.email);
+            mHtml += `<tr>
+                <td>${escapeHTML(m.email)}</td>
+                <td>${escapeHTML(m.role)}</td>
+                <td>${escapeHTML(m.department_id || 'N/A')}</td>
+                <td>${m.active ? '✅' : '❌'}</td>
+                <td>
+                    <button class="btn btn-ghost" onclick="showMemberModal(decodeURIComponent('${emailArg}'))">Edit</button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('membersAdmin').innerHTML = mHtml + `</tbody></table>`;
+    }
 
     // Render Holidays
-    const { data: holidays } = await sb.from('public_holidays').select('*').order('date', { ascending: false }).limit(20);
+    const { data: holidays, error: holidaysError } = await sb.from('public_holidays').select('*').order('date', { ascending: false }).limit(20);
+    if (holidaysError) {
+        renderError('holidaysAdmin', `Error loading holidays: ${holidaysError.message}`);
+        return;
+    }
     let hHtml = `<table class="admin-table">
         <thead><tr>
             <th class="date-col">Date</th>
@@ -95,7 +111,7 @@ async function loadAdminData() {
             <th>Type</th>
             <th>Actions</th>
         </tr></thead><tbody>`;
-    holidays.forEach(h => {
+    (holidays || []).forEach(h => {
         hHtml += `<tr>
             <td class="date-col">${escapeHTML(h.date)}</td>
             <td>${escapeHTML(h.name)}</td>
@@ -215,7 +231,11 @@ async function syncHolidays2026() {
 async function showDeptModal(id = null) {
     let dept = { id: '', name: '', active: true };
     if (id) {
-        const { data } = await sb.from('departments').select('*').eq('id', id).single();
+        const { data, error } = await sb.from('departments').select('*').eq('id', id).single();
+        if (error || !data) {
+            alert("Error loading department: " + (error?.message || "Department not found"));
+            return;
+        }
         dept = data;
     }
 
@@ -249,10 +269,14 @@ async function showDeptModal(id = null) {
 
         if (!id) {
             // New department: put at the end
-            const { data: existing } = await sb.from('departments')
+            const { data: existing, error: existingError } = await sb.from('departments')
                 .select('order_index')
                 .order('order_index', { ascending: false })
                 .limit(1);
+            if (existingError) {
+                alert("Error checking department order: " + existingError.message);
+                return;
+            }
             data.order_index = (existing && existing.length > 0) ? (existing[0].order_index + 1) : 0;
         }
 
@@ -268,11 +292,19 @@ async function showDeptModal(id = null) {
 async function showMemberModal(email = null) {
     let member = { email: '', role: 'DEPT_USER', department_id: '', active: true };
     if (email) {
-        const { data } = await sb.from('department_members').select('*').eq('email', email).single();
+        const { data, error } = await sb.from('department_members').select('*').eq('email', email).single();
+        if (error || !data) {
+            alert("Error loading member: " + (error?.message || "Member not found"));
+            return;
+        }
         member = data;
     }
 
-    const { data: depts } = await sb.from('departments').select('*').eq('active', true);
+    const { data: depts, error: deptsError } = await sb.from('departments').select('*').eq('active', true);
+    if (deptsError) {
+        alert("Error loading departments: " + deptsError.message);
+        return;
+    }
 
     const modal = document.getElementById('modalContent');
     modal.innerHTML = `

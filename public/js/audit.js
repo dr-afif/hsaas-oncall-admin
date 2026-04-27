@@ -8,10 +8,15 @@ async function renderAudit() {
         </div>
     `;
 
-    const { data } = await sb.from('audit_log')
+    const { data, error } = await sb.from('audit_log')
         .select('*')
         .order('ts', { ascending: false })
         .limit(100);
+
+    if (error) {
+        renderError('auditLog', `Error loading audit log: ${error.message}`);
+        return;
+    }
 
     let html = `<div class="table-responsive"><table class="admin-table">
         <thead><tr>
@@ -22,7 +27,7 @@ async function renderAudit() {
             <th>Details</th>
         </tr></thead><tbody>`;
 
-    data.forEach(log => {
+    (data || []).forEach(log => {
         html += `<tr>
             <td class="date-col">${escapeHTML(new Date(log.ts).toLocaleString())}</td>
             <td>${escapeHTML(log.actor_email)}</td>
