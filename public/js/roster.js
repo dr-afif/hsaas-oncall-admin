@@ -320,7 +320,7 @@ function startEditing(el) {
 
     const dl = document.getElementById('contactList');
     dl.innerHTML = rosterState.contacts.map(c =>
-        `<option value="${c.short_name}">${c.full_name}</option>`
+        `<option value="${c.full_name || c.short_name}">${c.short_name}</option>`
     ).join('');
 
     el.appendChild(input);
