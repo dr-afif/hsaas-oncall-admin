@@ -13,11 +13,11 @@ async function renderRoster() {
     const container = document.getElementById('appContent');
     container.innerHTML = `
         <div class="card">
-            <div class="sticky-roster-actions" style="margin-bottom: 1.5rem;">
-                <div id="monthSelector" class="month-selector" style="margin-bottom: 1rem;">
+            <div class="sticky-roster-actions">
+                <div id="monthSelector" class="month-selector">
                     <!-- Month buttons injected here -->
                 </div>
-                <div style="display:flex; gap: 0.75rem; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+                <div class="roster-action-btns">
                     <button class="btn btn-ghost hidden-mobile" onclick="exportData()">Export JSON</button>
                     <button class="btn btn-ghost" onclick="validateRoster()">Validate</button>
                     <button class="btn btn-primary" onclick="saveRoster()">Save Changes</button>

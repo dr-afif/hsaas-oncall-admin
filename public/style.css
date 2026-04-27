@@ -362,6 +362,7 @@ select {
     gap: 0.5rem;
     overflow-x: auto;
     padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .month-btn {
@@ -389,12 +390,32 @@ select {
     box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
 }
 
+.sticky-roster-actions {
+    position: sticky;
+    top: 56px; /* Adjusted for desktop header height */
+    z-index: 40;
+    background: var(--card-bg);
+    margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
 .roster-header-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
     gap: 2rem;
+}
+
+.roster-action-btns {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 main {
@@ -644,16 +665,11 @@ input[type="checkbox"] {
         max-height: calc(100vh - 250px);
     }
 
-    /* Roster actions sticky */
+    /* Roster actions sticky overrides for mobile */
     .sticky-roster-actions {
-        position: sticky;
-        top: 48px; /* Counter header height */
-        z-index: 40;
-        background: var(--bg);
-        margin: -1rem -1rem 1rem -1rem; /* override card padding */
+        top: 48px; /* Counter mobile header height */
+        margin: -1rem -1rem 1rem -1rem;
         padding: 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        border-bottom: 1px solid var(--border);
     }
 
     .sticky-roster-actions > div:last-child {
