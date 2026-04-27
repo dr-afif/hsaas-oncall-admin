@@ -47,15 +47,16 @@ async function loadAdminData() {
     depts.data.forEach((d, idx) => {
         const isFirst = idx === 0;
         const isLast = idx === depts.data.length - 1;
+        const deptArg = encodeURIComponent(d.id);
         dHtml += `<tr>
-            <td>${d.id}</td>
-            <td>${d.name}</td>
+            <td>${escapeHTML(d.id)}</td>
+            <td>${escapeHTML(d.name)}</td>
             <td>${d.active ? '✅' : '❌'}</td>
             <td>
                 <div style="display:flex; gap: 0.5rem;">
-                    <button class="btn btn-ghost" onclick="showDeptModal('${d.id}')">Edit</button>
-                    <button class="btn btn-ghost" onclick="moveDepartment('${d.id}', 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
-                    <button class="btn btn-ghost" onclick="moveDepartment('${d.id}', 'down')" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
+                    <button class="btn btn-ghost" onclick="showDeptModal(decodeURIComponent('${deptArg}'))">Edit</button>
+                    <button class="btn btn-ghost" onclick="moveDepartment(decodeURIComponent('${deptArg}'), 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
+                    <button class="btn btn-ghost" onclick="moveDepartment(decodeURIComponent('${deptArg}'), 'down')" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
                 </div>
             </td>
         </tr>`;
@@ -72,13 +73,14 @@ async function loadAdminData() {
             <th>Actions</th>
         </tr></thead><tbody>`;
     members.data.forEach(m => {
+        const emailArg = encodeURIComponent(m.email);
         mHtml += `<tr>
-            <td>${m.email}</td>
-            <td>${m.role}</td>
-            <td>${m.department_id || 'N/A'}</td>
+            <td>${escapeHTML(m.email)}</td>
+            <td>${escapeHTML(m.role)}</td>
+            <td>${escapeHTML(m.department_id || 'N/A')}</td>
             <td>${m.active ? '✅' : '❌'}</td>
             <td>
-                <button class="btn btn-ghost" onclick="showMemberModal('${m.email}')">Edit</button>
+                <button class="btn btn-ghost" onclick="showMemberModal(decodeURIComponent('${emailArg}'))">Edit</button>
             </td>
         </tr>`;
     });
@@ -95,8 +97,8 @@ async function loadAdminData() {
         </tr></thead><tbody>`;
     holidays.forEach(h => {
         hHtml += `<tr>
-            <td class="date-col">${h.date}</td>
-            <td>${h.name}</td>
+            <td class="date-col">${escapeHTML(h.date)}</td>
+            <td>${escapeHTML(h.name)}</td>
             <td>${h.is_state_holiday ? 'Selangor' : 'National'}</td>
             <td>
                 <button class="btn btn-ghost" onclick="deleteHoliday('${h.id}')">Delete</button>
@@ -223,11 +225,11 @@ async function showDeptModal(id = null) {
         <form id="deptForm">
             <div style="margin-bottom: 1rem;">
                 <label>Department Code (ID)</label>
-                <input type="text" name="id" value="${dept.id}" ${id ? 'readonly' : ''} placeholder="e.g. ED, MED" required>
+                <input type="text" name="id" value="${escapeHTML(dept.id)}" ${id ? 'readonly' : ''} placeholder="e.g. ED, MED" required>
             </div>
             <div style="margin-bottom: 1rem;">
                 <label>Department Name</label>
-                <input type="text" name="name" value="${dept.name}" placeholder="e.g. Emergency Department" required>
+                <input type="text" name="name" value="${escapeHTML(dept.name)}" placeholder="e.g. Emergency Department" required>
             </div>
             <div style="margin-bottom: 1rem;">
                 <label><input type="checkbox" name="active" ${dept.active ? 'checked' : ''}> Active</label>
@@ -278,7 +280,7 @@ async function showMemberModal(email = null) {
         <form id="memberForm">
             <div style="margin-bottom: 1rem;">
                 <label>Email Address</label>
-                <input type="email" name="email" value="${member.email}" ${email ? 'readonly' : ''} required>
+                <input type="email" name="email" value="${escapeHTML(member.email)}" ${email ? 'readonly' : ''} required>
             </div>
             <div style="margin-bottom: 1rem;">
                 <label>Role</label>
@@ -291,7 +293,7 @@ async function showMemberModal(email = null) {
                 <label>Department</label>
                 <select name="department_id">
                     <option value="">-- None (Admin Only) --</option>
-                    ${depts.map(d => `<option value="${d.id}" ${member.department_id === d.id ? 'selected' : ''}>${d.name}</option>`).join('')}
+                    ${depts.map(d => `<option value="${escapeHTML(d.id)}" ${member.department_id === d.id ? 'selected' : ''}>${escapeHTML(d.name)}</option>`).join('')}
                 </select>
             </div>
             <div style="margin-bottom: 1rem;">

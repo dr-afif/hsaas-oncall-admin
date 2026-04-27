@@ -51,7 +51,7 @@ function renderMonthButtons() {
     const start = new Date(today.getFullYear(), today.getMonth() - 2, 1); // 2 months back
 
     let html = '';
-    
+
     // 1. Add explicit month picker
     html += `<input type="month" class="month-btn" style="padding: 0.35rem 0.5rem; outline: none;" title="Select any month" value="${rosterState.month}" onchange="if(this.value) setRosterMonth(this.value)">`;
 
@@ -113,7 +113,7 @@ async function loadRosterData() {
 
     if (slotError) {
         console.error("Slot load error:", slotError);
-        document.getElementById('gridContainer').innerHTML = `<p class="error">Error loading slots: ${slotError.message}</p>`;
+        document.getElementById('gridContainer').innerHTML = `<p class="error">Error loading slots: ${escapeHTML(slotError.message)}</p>`;
         return;
     }
 
@@ -145,7 +145,7 @@ async function loadRosterData() {
             .insert({ department_id: deptId, month }).select().single();
         if (insError) {
             console.error("Roster month insert error:", insError);
-            document.getElementById('gridContainer').innerHTML = `<p class="error">Error creating roster month: ${insError.message}</p>`;
+            document.getElementById('gridContainer').innerHTML = `<p class="error">Error creating roster month: ${escapeHTML(insError.message)}</p>`;
             return;
         }
         rm = newRm;
@@ -223,7 +223,7 @@ function buildGrid() {
         }
         const isLastInstance = col.instance === (col.slot.max_people || 1) - 1;
         const boundaryClass = isLastInstance ? 'slot-boundary' : '';
-        html += `<th class="${boundaryClass}">${title} ${col.slot.required ? '<span style="color:red">*</span>' : ''}</th>`;
+        html += `<th class="${boundaryClass}">${escapeHTML(title)} ${col.slot.required ? '<span style="color:red">*</span>' : ''}</th>`;
     });
     html += `</tr></thead><tbody>`;
 
@@ -239,7 +239,7 @@ function buildGrid() {
                     <td class="date-col">
                         <div style="font-size: 0.75rem; color: var(--text-muted)">${dayName}</div>
                         <div>${dateStr}</div>
-                        ${holiday ? `<span class="holiday-label">${holiday.name}</span>` : ''}
+                        ${holiday ? `<span class="holiday-label">${escapeHTML(holiday.name)}</span>` : ''}
                     </td>`;
         rosterState.columns.forEach(col => {
             const cell = rosterState.cells[`${dateStr}|${col.slot.id}|${col.instance}`];
@@ -248,9 +248,9 @@ function buildGrid() {
             const isLastInstance = col.instance === (col.slot.max_people || 1) - 1;
             const boundaryClass = isLastInstance ? 'slot-boundary' : '';
 
-            html += `<td class="roster-cell ${statusClass} ${boundaryClass}" 
-                        data-date="${dateStr}" 
-                        data-slot-id="${col.slot.id}" 
+            html += `<td class="roster-cell ${statusClass} ${boundaryClass}"
+                        data-date="${dateStr}"
+                        data-slot-id="${col.slot.id}"
                         data-instance="${col.instance}"
                         tabindex="0"
                         onclick="focusCell(this)"
@@ -268,9 +268,9 @@ function resolveDisplay(cell) {
     if (!cell) return '';
     if (cell.contact_id) {
         const contact = rosterState.contacts.find(c => c.id === cell.contact_id);
-        return contact ? contact.short_name : '???';
+        return contact ? escapeHTML(contact.short_name) : '???';
     }
-    return cell.raw_text || '';
+    return escapeHTML(cell.raw_text || '');
 }
 
 function resolveStatusClass(cell) {
@@ -320,7 +320,7 @@ function startEditing(el) {
 
     const dl = document.getElementById('contactList');
     dl.innerHTML = rosterState.contacts.map(c =>
-        `<option value="${c.short_name}">${c.full_name}</option>`
+        `<option value="${escapeHTML(c.short_name)}">${escapeHTML(c.full_name)}</option>`
     ).join('');
 
     el.appendChild(input);
@@ -339,10 +339,10 @@ function startEditing(el) {
             const date = el.dataset.date;
             const slotId = el.dataset.slotId;
             const instance = el.dataset.instance;
-            
+
             input.onblur = null; // prevent double update
             updateCell(el, val, true);
-            
+
             if (e.key === 'Tab' && e.shiftKey) {
                 moveFocusToNextCell(date, slotId, instance, 'left');
             } else if (e.key === 'Enter' && e.shiftKey) {
@@ -539,7 +539,7 @@ function updateCell(el, val, reRender = true) {
     if (reRender) buildGrid();
 }
 
- 
+
 async function saveRoster() {
     const toUpsert = Object.values(rosterState.cells).filter(c => c.dirty);
     if (toUpsert.length === 0) {
@@ -560,7 +560,7 @@ async function saveRoster() {
             if (payload.id) {
                 // Optimistic lock: update only if version matches
                 const { error, count } = await sb.from('roster_cells')
-                    .update({ ...payload, version: payload.version + 1 })
+                    .update({ ...payload, version: payload.version + 1 }, { count: 'exact' })
                     .eq('id', payload.id)
                     .eq('version', payload.version);
 
@@ -641,7 +641,7 @@ function exportData() {
     const data = Object.values(rosterState.cells).map(c => {
         const slot = rosterState.slots.find(s => s.id === c.slot_definition_id);
         const contact = rosterState.contacts.find(con => con.id === c.contact_id);
-        
+
         let slotDisplay = slot?.label || '';
         if (slot && slot.max_people > 1) {
             const subLabel = slot.sub_labels && slot.sub_labels[c.instance_index] ? slot.sub_labels[c.instance_index] : '';

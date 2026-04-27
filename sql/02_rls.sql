@@ -6,17 +6,17 @@ CREATE OR REPLACE FUNCTION current_email() RETURNS TEXT AS $$
     current_setting('request.jwt.claims', true)::jsonb ->> 'email',
     ''
   ));
-$$ LANGUAGE sql STABLE;
+$$ LANGUAGE sql STABLE SET search_path = public;
 
 CREATE OR REPLACE FUNCTION is_admin() RETURNS BOOLEAN AS $$
   SELECT EXISTS (
-    SELECT 1 FROM department_members 
+    SELECT 1 FROM department_members
     WHERE email = current_email() AND role = 'ADMIN' AND active = true
   );
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE FUNCTION my_department() RETURNS TEXT AS $$
-  SELECT department_id FROM department_members 
+  SELECT department_id FROM department_members
   WHERE email = current_email() AND role = 'DEPT_USER' AND active = true;
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
@@ -41,49 +41,49 @@ CREATE POLICY "Users read self" ON department_members FOR SELECT TO authenticate
 
 -- 3) contacts
 CREATE POLICY "Admin contacts" ON contacts FOR ALL TO authenticated USING (is_admin());
-CREATE POLICY "Dept users CRUD contacts" ON contacts FOR ALL TO authenticated 
+CREATE POLICY "Dept users CRUD contacts" ON contacts FOR ALL TO authenticated
   USING (department_id = my_department())
   WITH CHECK (department_id = my_department());
 
 -- 4) contact_aliases
 CREATE POLICY "Admin aliases" ON contact_aliases FOR ALL TO authenticated USING (is_admin());
-CREATE POLICY "Dept users CRUD aliases" ON contact_aliases FOR ALL TO authenticated 
+CREATE POLICY "Dept users CRUD aliases" ON contact_aliases FOR ALL TO authenticated
   USING (department_id = my_department())
   WITH CHECK (department_id = my_department());
 
 -- 5) slot_definitions
 CREATE POLICY "Admin slots" ON slot_definitions FOR ALL TO authenticated USING (is_admin());
-CREATE POLICY "Dept users CRUD slots" ON slot_definitions FOR ALL TO authenticated 
+CREATE POLICY "Dept users CRUD slots" ON slot_definitions FOR ALL TO authenticated
   USING (department_id = my_department())
   WITH CHECK (department_id = my_department());
 
 -- 6) roster_months
 CREATE POLICY "Admin roster_months" ON roster_months FOR ALL TO authenticated USING (is_admin());
-CREATE POLICY "Dept users CRUD roster_months" ON roster_months FOR ALL TO authenticated 
+CREATE POLICY "Dept users CRUD roster_months" ON roster_months FOR ALL TO authenticated
   USING (department_id = my_department())
   WITH CHECK (department_id = my_department());
 
 -- 7) roster_cells
 CREATE POLICY "Admin roster_cells" ON roster_cells FOR ALL TO authenticated USING (is_admin());
-CREATE POLICY "Dept users CRUD roster_cells" ON roster_cells FOR ALL TO authenticated 
+CREATE POLICY "Dept users CRUD roster_cells" ON roster_cells FOR ALL TO authenticated
   USING (EXISTS (
-    SELECT 1 FROM roster_months rm 
+    SELECT 1 FROM roster_months rm
     WHERE rm.id = roster_cells.roster_month_id AND rm.department_id = my_department()
   ))
   WITH CHECK (EXISTS (
-    SELECT 1 FROM roster_months rm 
+    SELECT 1 FROM roster_months rm
     WHERE rm.id = roster_cells.roster_month_id AND rm.department_id = my_department()
   ));
 
 -- 8) publish_events
 CREATE POLICY "Admin publish" ON publish_events FOR ALL TO authenticated USING (is_admin());
-CREATE POLICY "Dept users CRUD publish" ON publish_events FOR ALL TO authenticated 
+CREATE POLICY "Dept users CRUD publish" ON publish_events FOR ALL TO authenticated
   USING (department_id = my_department())
   WITH CHECK (department_id = my_department());
 
 -- 9) audit_log
 CREATE POLICY "Admin audit" ON audit_log FOR SELECT TO authenticated USING (is_admin());
-CREATE POLICY "Users audit filter" ON audit_log FOR SELECT TO authenticated 
+CREATE POLICY "Users audit filter" ON audit_log FOR SELECT TO authenticated
   USING (actor_email = current_email() OR (context->>'department_id') = my_department());
 
 -- Access Control Block: If user not in department_members, they have no access

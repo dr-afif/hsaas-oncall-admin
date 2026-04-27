@@ -4,7 +4,7 @@ A modern, vanilla JS application for managing hospital oncall rosters.
 
 ## Tech Stack
 -   **Frontend**: Plain HTML, CSS, Javascript (Vanilla).
--   **Auth**: Auth0 (OIDC).
+-   **Auth**: Supabase Auth with Google OAuth.
 -   **Database**: Supabase (PostgreSQL with RLS).
 -   **Hosting**: Compatible with any static hosting (GitHub Pages, Cloudflare Pages, etc.).
 
@@ -12,10 +12,15 @@ A modern, vanilla JS application for managing hospital oncall rosters.
 
 ### 1. Supabase Setup
 1.  Create a new Supabase project.
-2.  Run the SQL scripts in the `/sql` directory in order:
+2.  Run the SQL scripts in the `/sql` directory in this order:
     -   `01_schema.sql` (Tables and basic constraints)
+    -   `05_multi_person_slots.sql` (Multi-person roster cells)
+    -   `06_public_holidays.sql` (Holiday table and policies)
     -   `02_rls.sql` (Security policies and JWT helpers)
     -   `03_audit_triggers.sql` (Audit logging triggers)
+    -   `04_seed_admin.sql` (First admin and starter department)
+    -   `07_seed_holidays_2026.sql` (Optional 2026 Selangor holiday seed)
+    -   `08_maintenance.sql` (Optional audit-log pruning job)
 3.  Go to **Project Settings > API** and copy your **Project URL** and **anon public key**.
 
 ### 2. Google Auth Setup (Direct)
@@ -45,7 +50,7 @@ A modern, vanilla JS application for managing hospital oncall rosters.
 
 ### 4. Seeding Admin
 1.  Go to Supabase SQL Editor.
-2.  Run the content of `sql/04_seed_admin.sql` (after replacing the email with your actual Auth0 login email).
+2.  Run the content of `sql/04_seed_admin.sql` after replacing the email with your actual Google login email.
 
 ### 5. Local Testing
 1.  Serve the `public` directory using a local web server (e.g., `npx serve public` or VS Code Live Server).

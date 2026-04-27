@@ -12,14 +12,23 @@ CREATE TABLE public_holidays (
 ALTER TABLE public_holidays ENABLE ROW LEVEL SECURITY;
 
 -- Policies
-CREATE POLICY "Public holidays are viewable by everyone" 
+CREATE POLICY "Public holidays are viewable by everyone"
 ON public_holidays FOR SELECT USING (true);
 
-CREATE POLICY "Public holidays are manageable by admins" 
-ON public_holidays FOR ALL USING (
+CREATE POLICY "Public holidays are manageable by admins"
+ON public_holidays FOR ALL TO authenticated USING (
     EXISTS (
-        SELECT 1 FROM department_members 
-        WHERE email = auth.jwt() ->> 'email' 
+        SELECT 1 FROM department_members
+        WHERE email = lower(auth.jwt() ->> 'email')
         AND role = 'ADMIN'
+        AND active = true
+    )
+)
+WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM department_members
+        WHERE email = lower(auth.jwt() ->> 'email')
+        AND role = 'ADMIN'
+        AND active = true
     )
 );

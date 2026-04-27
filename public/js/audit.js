@@ -24,11 +24,11 @@ async function renderAudit() {
 
     data.forEach(log => {
         html += `<tr>
-            <td class="date-col">${new Date(log.ts).toLocaleString()}</td>
-            <td>${log.actor_email}</td>
-            <td>${log.table_name}</td>
-            <td>${log.action}</td>
-            <td><pre style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${JSON.stringify(log.after_json || log.before_json)}</pre></td>
+            <td class="date-col">${escapeHTML(new Date(log.ts).toLocaleString())}</td>
+            <td>${escapeHTML(log.actor_email)}</td>
+            <td>${escapeHTML(log.table_name)}</td>
+            <td>${escapeHTML(log.action)}</td>
+            <td><pre style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(JSON.stringify(log.after_json || log.before_json))}</pre></td>
         </tr>`;
     });
     document.getElementById('auditLog').innerHTML = html + `</tbody></table></div>`;

@@ -7,6 +7,16 @@ const state = {
     view: 'roster'
 };
 
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[ch]));
+}
+
 async function init() {
     const session = await initAuth();
     if (!session) {
@@ -127,17 +137,13 @@ async function showHelpModal() {
     `;
 
     try {
-        const response = await fetch('USER_GUIDE.md'); 
+        const response = await fetch('USER_GUIDE.md');
         if (!response.ok) throw new Error("Could not find the guide.");
         let text = await response.text();
-        
-        if (typeof marked !== 'undefined') {
-            document.getElementById('helpGuideContent').innerHTML = marked.parse(text);
-        } else {
-            document.getElementById('helpGuideContent').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${text}</pre>`;
-        }
+
+        document.getElementById('helpGuideContent').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHTML(text)}</pre>`;
     } catch (err) {
-        document.getElementById('helpGuideContent').innerHTML = `<p class="error" style="color: red;">${err.message}</p>`;
+        document.getElementById('helpGuideContent').innerHTML = `<p class="error" style="color: red;">${escapeHTML(err.message)}</p>`;
     }
 }
 
@@ -145,14 +151,14 @@ function toggleMobileDrawer() {
     const navContainer = document.getElementById('navContainer');
     const overlay = document.getElementById('drawerOverlay');
     if (!navContainer || !overlay) return;
-    
+
     navContainer.classList.toggle('drawer-open');
     overlay.classList.toggle('drawer-open');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     init();
-    
+
     // Auto-close drawer on mobile when clicking a link
     document.querySelectorAll('#mainNav a').forEach(a => {
         a.addEventListener('click', () => {

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const configPath = path.join(__dirname, '../public/js/app_config.js');
+const configPath = path.join(__dirname, '../public/js/config.js');
 const dirPath = path.dirname(configPath);
 
 // Ensure directory exists
@@ -9,8 +9,13 @@ if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
 }
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://hklgsjozideopydbdcmp.supabase.co';
+const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl) {
+    console.error('FATAL ERROR: SUPABASE_URL environment variable is missing!');
+    process.exit(1);
+}
 
 if (!supabaseAnonKey) {
     console.error('FATAL ERROR: SUPABASE_ANON_KEY environment variable is missing!');

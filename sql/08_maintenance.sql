@@ -1,6 +1,6 @@
 -- sql/08_maintenance.sql
 -- Enable the pg_cron extension if not already enabled
--- Note: In Supabase, pg_cron is usually enabled via the dashboard, 
+-- Note: In Supabase, pg_cron is usually enabled via the dashboard,
 -- but we can try enabling it here.
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
@@ -12,11 +12,11 @@ DECLARE
 BEGIN
     DELETE FROM public.audit_log
     WHERE ts < (NOW() - (retention_days || ' days')::interval);
-    
+
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     RAISE NOTICE 'Pruned % audit log entries older than % days.', deleted_count, retention_days;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Schedule the cleanup to run every day at 3:00 AM (server time)
 -- We use 90 days as the default retention for the Free Tier.

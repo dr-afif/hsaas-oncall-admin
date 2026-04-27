@@ -92,9 +92,9 @@ async function showBulkContactModal() {
 
         contacts.forEach(c => {
             html += `<tr style="border-bottom: 1px solid var(--border); ${c.rowStyle}">
-                <td style="padding: 0.5rem;">${c.sn || '?'}</td>
-                <td style="padding: 0.5rem;">${c.fn || '?'}</td>
-                <td style="padding: 0.5rem;">${c.ph || '-'}</td>
+                <td style="padding: 0.5rem;">${escapeHTML(c.sn || '?')}</td>
+                <td style="padding: 0.5rem;">${escapeHTML(c.fn || '?')}</td>
+                <td style="padding: 0.5rem;">${escapeHTML(c.ph || '-')}</td>
                 <td style="padding: 0.5rem;"><strong>${c.rowStatus}</strong></td>
             </tr>`;
         });
@@ -166,10 +166,10 @@ async function loadContacts() {
     data.forEach(c => {
         html += `<tr>
             <td><input type="checkbox" class="contact-checkbox" data-id="${c.id}" onclick="updateBulkDeleteVisibility()"></td>
-            <td>${c.short_name}</td>
-            <td>${c.full_name}</td>
-            <td>${c.phone_number || '-'}</td>
-            <td>${c.position || '-'}</td>
+            <td>${escapeHTML(c.short_name)}</td>
+            <td>${escapeHTML(c.full_name)}</td>
+            <td>${escapeHTML(c.phone_number || '-')}</td>
+            <td>${escapeHTML(c.position || '-')}</td>
             <td>
                 <label class="switch">
                     <input type="checkbox" ${c.active ? 'checked' : ''} onchange="toggleContactActive('${c.id}', this.checked)">
@@ -178,7 +178,7 @@ async function loadContacts() {
             <td>
                 <div style="display:flex; gap: 0.5rem;">
                     <button class="btn btn-ghost" onclick="showContactModal('${c.id}')">Edit</button>
-                    <button class="btn btn-ghost" style="color: var(--danger)" onclick="deleteContact('${c.id}', '${c.short_name}')">Delete</button>
+                    <button class="btn btn-ghost" style="color: var(--danger)" onclick="deleteContact('${c.id}')">Delete</button>
                 </div>
             </td>
         </tr>`;
@@ -216,7 +216,13 @@ async function toggleContactActive(id, isActive) {
     }
 }
 
-async function deleteContact(id, name) {
+async function deleteContact(id) {
+    const { data: contact, error: loadError } = await sb.from('contacts').select('short_name').eq('id', id).single();
+    if (loadError || !contact) {
+        alert("Error loading contact before delete: " + (loadError?.message || "Contact not found"));
+        return;
+    }
+    const name = contact.short_name;
     if (!confirm(`Are you sure you want to delete ${name}? This will preserve their name in the roster as plain text, but the link will be broken. Continue?`)) return;
 
     // 1. Preserve roster history by moving name to raw_text
@@ -280,15 +286,15 @@ async function showContactModal(id = null) {
         <form id="contactForm">
             <div style="margin-bottom: 1rem;">
                 <label>Short Name (Unique)</label>
-                <input type="text" name="short_name" value="${contact.short_name}" required>
+                <input type="text" name="short_name" value="${escapeHTML(contact.short_name)}" required>
             </div>
             <div style="margin-bottom: 1rem;">
                 <label>Full Name</label>
-                <input type="text" name="full_name" value="${contact.full_name}" required>
+                <input type="text" name="full_name" value="${escapeHTML(contact.full_name)}" required>
             </div>
             <div style="margin-bottom: 1rem;">
                 <label>Phone Number</label>
-                <input type="text" id="phoneInput" name="phone_number" value="${contact.phone_number || ''}" placeholder="e.g. 012-345 6789">
+                <input type="text" id="phoneInput" name="phone_number" value="${escapeHTML(contact.phone_number || '')}" placeholder="e.g. 012-345 6789">
             </div>
             <div style="margin-bottom: 1rem;">
                 <label>Position</label>

@@ -42,17 +42,17 @@ async function loadSlots() {
         const isFirst = idx === 0;
         const isLast = idx === data.length - 1;
         html += `<tr style="border-bottom: 1px solid var(--border)">
-            <td style="padding: 1rem">${s.slot_key}</td>
-            <td style="padding: 1rem">${s.label}</td>
+            <td style="padding: 1rem">${escapeHTML(s.slot_key)}</td>
+            <td style="padding: 1rem">${escapeHTML(s.label)}</td>
             <td style="padding: 1rem">${s.required ? 'Yes' : 'No'}</td>
-            <td style="padding: 1rem">${s.effective_from_month}</td>
-            <td style="padding: 1rem">${s.effective_to_month || 'Ongoing'}</td>
+            <td style="padding: 1rem">${escapeHTML(s.effective_from_month)}</td>
+            <td style="padding: 1rem">${escapeHTML(s.effective_to_month || 'Ongoing')}</td>
             <td style="padding: 1rem">
                 <div style="display:flex; gap: 0.5rem;">
                     <button class="btn btn-ghost" onclick="showSlotModal('${s.id}')">Edit</button>
                     <button class="btn btn-ghost" onclick="moveSlot('${s.id}', 'up')" ${isFirst ? 'disabled style="opacity:0.3"' : ''}>↑</button>
                     <button class="btn btn-ghost" onclick="moveSlot('${s.id}', 'down')" ${isLast ? 'disabled style="opacity:0.3"' : ''}>↓</button>
-                    <button class="btn btn-ghost" style="color:var(--danger)" onclick="deleteSlot('${s.id}', '${s.label.replace(/'/g, "\\'")}', '${s.slot_key.replace(/'/g, "\\'")}')">Delete</button>
+                    <button class="btn btn-ghost" style="color:var(--danger)" onclick="deleteSlot('${s.id}')">Delete</button>
                 </div>
             </td>
         </tr>`;
@@ -60,12 +60,19 @@ async function loadSlots() {
     document.getElementById('slotsTable').innerHTML = html + `</tbody></table></div>`;
 }
 
-async function deleteSlot(id, label, slot_key) {
+async function deleteSlot(id) {
+    const { data: slot, error: loadError } = await sb.from('slot_definitions').select('label, slot_key').eq('id', id).single();
+    if (loadError || !slot) {
+        alert("Error loading slot before delete: " + (loadError?.message || "Slot not found"));
+        return;
+    }
+
+    const { label, slot_key } = slot;
     if (!confirm(`Are you sure you want to delete the slot definition: ${label}?`)) return;
 
     // Soft delete by setting active = false, and append a suffix to the slot_key to free up the name for a new slot.
     const suffix = Math.floor(Date.now() / 1000);
-    const { error } = await sb.from('slot_definitions').update({ 
+    const { error } = await sb.from('slot_definitions').update({
         active: false,
         slot_key: `${slot_key}_del_${suffix}`
     }).eq('id', id);
@@ -128,20 +135,20 @@ async function showSlotModal(id = null) {
         <form id="slotForm">
             <div style="margin-bottom: 1rem;">
                 <label>Key (e.g. AM, PM)</label>
-                <input type="text" name="slot_key" value="${slot.slot_key}" required>
+                <input type="text" name="slot_key" value="${escapeHTML(slot.slot_key)}" required>
             </div>
             <div style="margin-bottom: 1rem;">
                 <label>Label</label>
-                <input type="text" name="label" value="${slot.label}" required>
+                <input type="text" name="label" value="${escapeHTML(slot.label)}" required>
             </div>
             <div style="display:flex; gap: 1rem; margin-bottom: 1rem;">
                 <div style="flex:1">
                     <label>Max People per Slot</label>
-                    <input type="number" id="maxPeopleInput" name="max_people" value="${slot.max_people}" min="1" required oninput="renderSubLabels()">
+                    <input type="number" id="maxPeopleInput" name="max_people" value="${escapeHTML(slot.max_people)}" min="1" required oninput="renderSubLabels()">
                 </div>
                 <div style="flex:1">
                     <label>Effective From (YYYY-MM)</label>
-                    <input type="text" name="effective_from_month" value="${slot.effective_from_month}" required>
+                    <input type="text" name="effective_from_month" value="${escapeHTML(slot.effective_from_month)}" required>
                 </div>
             </div>
             <div id="subLabelsContainer" style="margin-bottom: 1rem;"></div>
@@ -159,24 +166,24 @@ async function showSlotModal(id = null) {
         const maxInput = document.getElementById('maxPeopleInput');
         const count = parseInt(maxInput.value) || 1;
         const container = document.getElementById('subLabelsContainer');
-        
+
         // Preserve existing values before re-rendering
         const currentInputs = Array.from(container.querySelectorAll('input[name="sub_labels[]"]'));
         const currentValues = currentInputs.map(input => input.value);
-        
+
         let html = '';
         if (count > 1) {
             html += `<label>Optional Sub-labels (e.g. Blood, Urine)</label><div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">`;
             for (let i = 0; i < count; i++) {
                 // Pre-fill with existing typed value, or from DB slot data
                 const val = currentValues[i] !== undefined ? currentValues[i] : (slot.sub_labels[i] || '');
-                html += `<input type="text" name="sub_labels[]" placeholder="Slot ${i + 1} Title" value="${val.replace(/"/g, '&quot;')}">`;
+                html += `<input type="text" name="sub_labels[]" placeholder="Slot ${i + 1} Title" value="${escapeHTML(val)}">`;
             }
             html += `</div>`;
         }
         container.innerHTML = html;
     };
-    
+
     // Initial render
     setTimeout(window.renderSubLabels, 10);
 
@@ -190,7 +197,7 @@ async function showSlotModal(id = null) {
         const data = Object.fromEntries(fd.entries());
         data.required = fd.get('required') === 'on';
         data.department_id = state.activeDeptId;
-        
+
         // Collect sub labels array
         const subLabelInputs = e.target.querySelectorAll('input[name="sub_labels[]"]');
         if (subLabelInputs.length > 0) {
@@ -198,7 +205,7 @@ async function showSlotModal(id = null) {
         } else {
             data.sub_labels = [];
         }
-        
+
         // Cleanup sub_labels from regular Object.fromEntries which might be a comma-separated string
         delete data['sub_labels[]'];
 

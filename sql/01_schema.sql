@@ -7,6 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE departments (
     id TEXT PRIMARY KEY, -- "ED", "MED", etc.
     name TEXT NOT NULL,
+    order_index INT NOT NULL DEFAULT 0,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -22,7 +23,7 @@ CREATE TABLE department_members (
 );
 
 -- Constraint: Non-admin must have department_id
-ALTER TABLE department_members ADD CONSTRAINT non_admin_needs_dept 
+ALTER TABLE department_members ADD CONSTRAINT non_admin_needs_dept
     CHECK (role = 'ADMIN' OR department_id IS NOT NULL);
 
 -- 3) contacts

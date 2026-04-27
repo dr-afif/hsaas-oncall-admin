@@ -10,13 +10,13 @@ DECLARE
     v_pk_val TEXT;
 BEGIN
     v_actor_email := current_email();
-    
+
     -- Extract role and department from membership
     SELECT jsonb_build_object('role', role, 'department_id', department_id)
     INTO v_context
-    FROM department_members 
+    FROM department_members
     WHERE email = v_actor_email;
-    
+
     v_actor_role := v_context->>'role';
 
     IF (TG_OP = 'DELETE') THEN
@@ -39,18 +39,19 @@ BEGIN
 
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Apply triggers
 DO $$
 DECLARE
     t TEXT;
 BEGIN
-    FOR t IN SELECT table_name 
-             FROM information_schema.tables 
-             WHERE table_schema = 'public' 
+    FOR t IN SELECT table_name
+             FROM information_schema.tables
+             WHERE table_schema = 'public'
              AND table_name NOT IN ('audit_log')
     LOOP
+        EXECUTE format('DROP TRIGGER IF EXISTS audit_trigger_%I ON %I', t, t);
         EXECUTE format('CREATE TRIGGER audit_trigger_%I AFTER INSERT OR UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION process_audit_log()', t, t);
     END LOOP;
 END;
