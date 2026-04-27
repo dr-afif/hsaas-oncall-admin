@@ -394,6 +394,7 @@ function moveFocusToNextCell(currentDate, currentSlotId, currentInstance, direct
 }
 
 async function handleCellKey(e, el) {
+    if (e.target.tagName === 'INPUT') return;
     if (e.key === 'Enter') {
         e.preventDefault();
         startEditing(el);
