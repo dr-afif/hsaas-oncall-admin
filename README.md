@@ -21,6 +21,7 @@ A modern, vanilla JS application for managing hospital oncall rosters.
     -   `04_seed_admin.sql` (First admin and starter department)
     -   `07_seed_holidays_2026.sql` (Optional 2026 Selangor holiday seed)
     -   `08_maintenance.sql` (Optional audit-log pruning job)
+    -   `09_performance_indexes.sql` (Optional query/RLS helper indexes)
 3.  Go to **Project Settings > API** and copy your **Project URL** and **anon public key**.
 
 ### 2. Google Auth Setup (Direct)
@@ -53,7 +54,7 @@ A modern, vanilla JS application for managing hospital oncall rosters.
 2.  Run the content of `sql/04_seed_admin.sql` after replacing the email with your actual Google login email.
 
 ### 5. Local Testing
-1.  Serve the `public` directory using a local web server (e.g., `npx serve public` or VS Code Live Server).
+1.  Serve the `public` directory using a local web server (e.g., `npm run dev` or VS Code Live Server).
 2.  Navigate to `/login.html`.
 
 ## Key Features

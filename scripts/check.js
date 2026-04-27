@@ -59,10 +59,14 @@ for (const asset of ['./js/utils.js', './js/app.js', './js/roster.js']) {
 }
 
 const readme = read('README.md');
-for (const required of ['05_multi_person_slots.sql', '06_public_holidays.sql', 'Supabase Auth with Google OAuth']) {
+for (const required of ['05_multi_person_slots.sql', '06_public_holidays.sql', '09_performance_indexes.sql', 'Supabase Auth with Google OAuth']) {
     if (!readme.includes(required)) {
         fail(`README.md: missing ${required}`);
     }
+}
+
+if (!fs.existsSync(path.join(root, 'sql/09_performance_indexes.sql'))) {
+    fail('sql/09_performance_indexes.sql: missing optional performance index script');
 }
 
 if (read('scripts/build-config.js').includes('app_config.js')) {
