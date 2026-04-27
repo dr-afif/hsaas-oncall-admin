@@ -18,6 +18,7 @@ Run these in order for a fresh project:
 - `07_seed_holidays_2026.sql` - seeds 2026 public holidays.
 - `08_maintenance.sql` - adds audit-log pruning support with `pg_cron`.
 - `09_performance_indexes.sql` - adds helper indexes for common app queries and RLS lookups. Safe to rerun.
+- `10_rls_verification.sql` - documents manual RLS verification scenarios. Edit placeholders before use.
 
 ## Notes
 

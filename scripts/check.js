@@ -73,6 +73,14 @@ if (!fs.existsSync(path.join(root, 'sql/README.md'))) {
     fail('sql/README.md: missing SQL setup guide');
 }
 
+if (!fs.existsSync(path.join(root, 'sql/10_rls_verification.sql'))) {
+    fail('sql/10_rls_verification.sql: missing RLS verification guide');
+}
+
+if (!fs.existsSync(path.join(root, 'docs/WORKTREE_NOTES.md'))) {
+    fail('docs/WORKTREE_NOTES.md: missing worktree triage notes');
+}
+
 if (read('scripts/build-config.js').includes('app_config.js')) {
     fail('scripts/build-config.js: must generate public/js/config.js, not app_config.js');
 }
