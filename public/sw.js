@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hsaas-roster-admin-v2';
+const CACHE_NAME = 'hsaas-roster-admin-v3';
 
 const ASSETS_TO_CACHE = [
     './',
