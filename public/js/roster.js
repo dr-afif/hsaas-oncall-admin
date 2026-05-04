@@ -178,7 +178,7 @@ async function loadRosterData() {
 function tryResolveName(val) {
     if (!val) return { contactId: null, rawText: null };
     // New: Strip "Dr." prefix variations for better matching
-    const cleanVal = val.trim().replace(/^(dr\.?)\b\s*/i, '').toLowerCase();
+    const cleanVal = val.trim().replace(/^dr\b\.?\s*/i, '').toLowerCase();
 
     // 1. Check Short Name
     let contact = rosterState.contacts.find(c => (c.short_name || '').toLowerCase() === cleanVal);
@@ -517,7 +517,7 @@ function addDays(date, days) {
 function updateCell(el, val, reRender = true) {
     // New: Strip "Dr." prefixes from entered data
     if (typeof val === 'string') {
-        val = val.replace(/^(dr\.?)\b\s*/i, '');
+        val = val.replace(/^dr\b\.?\s*/i, '');
     }
 
     const date = el.dataset.date;
