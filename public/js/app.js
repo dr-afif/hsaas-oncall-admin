@@ -1,6 +1,6 @@
 // public/js/app.js
 
-const state = {
+window.state = {
     user: null,
     membership: null,
     activeDeptId: null,
@@ -36,6 +36,7 @@ async function init() {
 
     if (members.role === 'ADMIN') {
         document.querySelector('[data-view="admin"]').classList.remove('hidden');
+        document.querySelector('[data-view="access"]').classList.remove('hidden');
         document.getElementById('admin-dept-switcher').classList.remove('hidden');
         await loadDeptsForAdmin();
     } else {
@@ -97,6 +98,7 @@ function handleRoute() {
         case 'slots': renderSlots(); break;
         case 'audit': renderAudit(); break;
         case 'admin': renderAdmin(); break;
+        case 'access': renderAccessRequests(); break;
     }
 }
 
