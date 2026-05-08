@@ -1,5 +1,7 @@
 // public/js/access-requests.js
 
+let accessRequestsSubscription = null;
+
 async function renderAccessRequests() {
     const main = document.getElementById('appContent');
     main.innerHTML = `
@@ -21,15 +23,36 @@ async function renderAccessRequests() {
     `;
 
     await loadAccessRequests();
+    setupAccessRequestsRealtime();
 }
 
-async function loadAccessRequests() {
-    // Show loading state
-    const containers = ['pendingContainer', 'activeContainer', 'historyContainer'];
-    containers.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = '<div class="card"><p>Loading...</p></div>';
-    });
+function setupAccessRequestsRealtime() {
+    if (accessRequestsSubscription) return;
+
+    accessRequestsSubscription = sb
+        .channel('access-requests-changes')
+        .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'viewer_access_requests' 
+        }, (payload) => {
+            console.log('Access request change detected:', payload.eventType);
+            loadAccessRequests(true); // Silent refresh
+        })
+        .subscribe((status) => {
+            console.log('Realtime subscription status:', status);
+        });
+}
+
+async function loadAccessRequests(silent = false) {
+    // Show loading state if not silent
+    if (!silent) {
+        const containers = ['pendingContainer', 'activeContainer', 'historyContainer'];
+        containers.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '<div class="card"><p>Loading...</p></div>';
+        });
+    }
 
     const { data, error } = await sb
         .from('viewer_access_requests')
