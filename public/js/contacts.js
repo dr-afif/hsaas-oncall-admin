@@ -367,8 +367,6 @@ async function showContactModal(id = null) {
         console.log("Contact form submission triggered.");
 
         try {
-            if (!confirm("Save contact changes?")) return;
-
             const fd = new FormData(e.target);
             const data = Object.fromEntries(fd.entries());
             data.department_id = state.activeDeptId;

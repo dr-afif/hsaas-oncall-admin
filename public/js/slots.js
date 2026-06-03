@@ -204,8 +204,6 @@ async function showSlotModal(id = null) {
     document.getElementById('slotForm').onsubmit = async (e) => {
         e.preventDefault();
 
-        if (!confirm("Save slot definition?")) return;
-
         const fd = new FormData(e.target);
         const data = Object.fromEntries(fd.entries());
         data.required = fd.get('required') === 'on';
