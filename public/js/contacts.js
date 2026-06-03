@@ -364,23 +364,37 @@ async function showContactModal(id = null) {
     document.getElementById('modalOverlay').style.display = 'flex';
     document.getElementById('contactForm').onsubmit = async (e) => {
         e.preventDefault();
+        console.log("Contact form submission triggered.");
 
-        if (!confirm("Save contact changes?")) return;
+        try {
+            if (!confirm("Save contact changes?")) return;
 
-        const fd = new FormData(e.target);
-        const data = Object.fromEntries(fd.entries());
-        data.department_id = state.activeDeptId;
-        data.active = fd.get('active') === 'on';
+            const fd = new FormData(e.target);
+            const data = Object.fromEntries(fd.entries());
+            data.department_id = state.activeDeptId;
+            data.active = fd.get('active') === 'on';
 
-        const { error } = id
-            ? await sb.from('contacts').update(data).eq('id', id)
-            : await sb.from('contacts').insert(data);
+            console.log("Normalized contact data to save:", data);
+            
+            const targetId = (id === 'null' || id === 'undefined' || !id) ? null : id;
+            console.log("Target contact ID for save:", targetId);
 
-        if (error) alert("Error saving contact: " + error.message);
-        else {
-            closeModal();
-            loadContacts();
-            showNotification("Contact saved.");
+            const { error } = targetId
+                ? await sb.from('contacts').update(data).eq('id', targetId)
+                : await sb.from('contacts').insert(data);
+
+            if (error) {
+                console.error("Supabase database error saving contact:", error);
+                alert("Error saving contact: " + error.message);
+            } else {
+                console.log("Contact saved successfully.");
+                closeModal();
+                loadContacts();
+                showNotification("Contact saved.");
+            }
+        } catch (err) {
+            console.error("JavaScript exception caught during contact save:", err);
+            alert("JS Error saving contact: " + err.message);
         }
     };
 }
