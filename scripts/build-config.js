@@ -9,8 +9,19 @@ if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
 }
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const rawUrl = process.env.SUPABASE_URL;
+const rawAnonKey = process.env.SUPABASE_ANON_KEY;
+
+function cleanEnvVar(val) {
+    if (!val) return '';
+    let cleaned = val.trim();
+    // Strip enclosing single or double quotes
+    cleaned = cleaned.replace(/^['"]|['"]$/g, '');
+    return cleaned.trim();
+}
+
+const supabaseUrl = cleanEnvVar(rawUrl);
+const supabaseAnonKey = cleanEnvVar(rawAnonKey);
 
 if (!supabaseUrl) {
     console.error('FATAL ERROR: SUPABASE_URL environment variable is missing!');
