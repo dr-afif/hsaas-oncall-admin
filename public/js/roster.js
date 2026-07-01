@@ -18,6 +18,7 @@ async function renderRoster() {
                     <!-- Month buttons injected here -->
                 </div>
                 <div class="roster-action-btns">
+                    <button id="importRequestBtn" class="btn btn-ghost hidden-mobile" style="display: none; color: var(--primary);" onclick="importFromRequestApp()">Import REQUEST-APP</button>
                     <button class="btn btn-ghost hidden-mobile" onclick="exportData()">Export JSON</button>
                     <button class="btn btn-ghost" onclick="validateRoster()">Validate</button>
                     <button class="btn btn-primary" onclick="saveRoster()">Save Changes</button>
@@ -101,6 +102,11 @@ async function loadRosterData() {
         return;
     }
     const month = rosterState.month;
+    
+    const importBtn = document.getElementById('importRequestBtn');
+    if (importBtn) {
+        importBtn.style.display = deptId === 'ED' ? 'inline-block' : 'none';
+    }
 
     // 1. Load Slots for this month
     const { data: slots, error: slotError } = await sb.from('slot_definitions')
@@ -673,4 +679,87 @@ function exportData() {
     a.href = url;
     a.download = `roster-${state.activeDeptId}-${rosterState.month}.json`;
     a.click();
+}
+
+async function importFromRequestApp() {
+    if (!confirm("This will overwrite existing names in the current month's roster with data from REQUEST-APP. Proceed?")) return;
+
+    try {
+        const url = 'https://script.google.com/macros/s/AKfycbwFNXKmohkgla4JKB819RZSwh7YIsiff87B-mGCZuEJXEe5H_bk5RWHew7VAMWWtv_5jA/exec?action=alldata';
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Failed to fetch from REQUEST-APP");
+        const data = await res.json();
+        const masterRoster = data.masterRoster || data.rows || [];
+
+        if (masterRoster.length === 0) {
+            alert("No data found in REQUEST-APP master roster.");
+            return;
+        }
+
+        let updateCount = 0;
+        const currentMonthPrefix = rosterState.month;
+
+        // Group data by date and shift
+        const importsByDateShift = {};
+
+        for (const item of masterRoster) {
+            if (!item.Name || !item.Date || !item.Shift) continue;
+            
+            // Format UTC date to local date (Asia/Kuala_Lumpur)
+            const d = new Date(item.Date);
+            const localDate = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }); // YYYY-MM-DD
+            
+            if (!localDate.startsWith(currentMonthPrefix)) continue; // Only import for currently viewed month
+
+            const shiftStr = item.Shift.trim().toLowerCase();
+            const key = `${localDate}|${shiftStr}`;
+            if (!importsByDateShift[key]) importsByDateShift[key] = [];
+            importsByDateShift[key].push(item.Name);
+        }
+
+        // Apply to cells
+        for (const key of Object.keys(importsByDateShift)) {
+            const [date, shiftStr] = key.split('|');
+            const names = importsByDateShift[key];
+
+            // Find matching slot
+            const slot = rosterState.slots.find(s => s.label.toLowerCase() === shiftStr);
+            if (!slot) continue;
+
+            for (let i = 0; i < names.length; i++) {
+                if (i >= (slot.max_people || 1)) break; // Don't exceed max people
+
+                const instanceIndex = i;
+                const cellKey = `${date}|${slot.id}|${instanceIndex}`;
+                
+                // Use updateCell logic but without re-rendering each time
+                let val = names[i].replace(/^dr\b\.?\s*/i, '').toUpperCase();
+                
+                const res = tryResolveName(val);
+                const contactId = res.contactId;
+                const rawText = res.rawText;
+
+                const cell = rosterState.cells[cellKey] || {
+                    roster_month_id: rosterState.rosterMonthId,
+                    date,
+                    slot_definition_id: slot.id,
+                    instance_index: parseInt(instanceIndex),
+                    version: 0
+                };
+
+                cell.contact_id = contactId;
+                cell.raw_text = rawText;
+                cell.dirty = true;
+                rosterState.cells[cellKey] = cell;
+                updateCount++;
+            }
+        }
+
+        buildGrid();
+        showNotification(`Successfully populated ${updateCount} slots from REQUEST-APP.`);
+        
+    } catch (err) {
+        console.error("Import error:", err);
+        alert("Failed to import: " + err.message);
+    }
 }
