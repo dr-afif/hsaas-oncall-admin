@@ -711,7 +711,13 @@ async function importFromRequestApp() {
             
             if (!localDate.startsWith(currentMonthPrefix)) continue; // Only import for currently viewed month
 
-            const shiftStr = item.Shift.trim().toLowerCase();
+            let shiftStr = item.Shift.trim().toLowerCase();
+            
+            // Normalize variations like "am (ex)", "pm (s)", "on1", "on2"
+            if (shiftStr.startsWith('am')) shiftStr = 'am';
+            else if (shiftStr.startsWith('pm')) shiftStr = 'pm';
+            else if (shiftStr.startsWith('on')) shiftStr = 'on';
+
             const key = `${localDate}|${shiftStr}`;
             if (!importsByDateShift[key]) importsByDateShift[key] = [];
             importsByDateShift[key].push(item.Name);
@@ -722,8 +728,15 @@ async function importFromRequestApp() {
             const [date, shiftStr] = key.split('|');
             const names = importsByDateShift[key];
 
-            // Find matching slot
-            const slot = rosterState.slots.find(s => s.label.toLowerCase() === shiftStr);
+            // Find matching slot (support exact match or mapped keywords)
+            const slot = rosterState.slots.find(s => {
+                const lbl = s.label.toLowerCase();
+                if (shiftStr === 'am' && lbl.includes('am')) return true;
+                if (shiftStr === 'pm' && lbl.includes('pm')) return true;
+                if (shiftStr === 'on' && (lbl.includes('on') || lbl.includes('night'))) return true;
+                return lbl === shiftStr;
+            });
+            
             if (!slot) continue;
 
             for (let i = 0; i < names.length; i++) {
