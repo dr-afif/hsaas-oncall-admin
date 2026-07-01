@@ -311,6 +311,7 @@ function startEditing(el) {
     input.style.width = '100%';
     input.style.border = 'none';
     input.style.outline = 'none';
+    input.style.textTransform = 'uppercase';
 
     // Create datalist if it doesn't exist
     if (!document.getElementById('contactList')) {
@@ -515,9 +516,9 @@ function addDays(date, days) {
 }
 
 function updateCell(el, val, reRender = true) {
-    // New: Strip "Dr." prefixes from entered data
+    // New: Strip "Dr." prefixes from entered data and format to uppercase
     if (typeof val === 'string') {
-        val = val.replace(/^dr\b\.?\s*/i, '');
+        val = val.replace(/^dr\b\.?\s*/i, '').toUpperCase();
     }
 
     const date = el.dataset.date;

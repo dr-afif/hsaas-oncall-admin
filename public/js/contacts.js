@@ -65,8 +65,8 @@ async function showBulkContactModal() {
 
         const contacts = lines.map(line => {
             const parts = line.split('\t');
-            const sn = (parts[0] || '').trim();
-            const fn = (parts[1] || '').trim();
+            const sn = (parts[0] || '').trim().toUpperCase();
+            const fn = (parts[1] || '').trim().toUpperCase();
             const ph = (parts[2] || '').trim();
             const pos = (parts[3] || '').trim();
 
@@ -122,7 +122,7 @@ async function showBulkContactModal() {
             return {
                 department_id: state.activeDeptId,
                 short_name: sn,
-                full_name: (parts[1] || '').trim(),
+                full_name: (parts[1] || '').trim().toUpperCase(),
                 phone_number: (parts[2] || '').trim(),
                 position: (parts[3] || '').trim(),
                 active: true
@@ -303,11 +303,11 @@ async function showContactModal(id = null) {
         <form id="contactForm">
             <div style="margin-bottom: 1rem;">
                 <label>Short Name (Unique)</label>
-                <input type="text" name="short_name" value="${escapeHTML(contact.short_name)}" required>
+                <input type="text" name="short_name" value="${escapeHTML(contact.short_name)}" required style="text-transform: uppercase;">
             </div>
             <div style="margin-bottom: 1rem;">
                 <label>Full Name</label>
-                <input type="text" name="full_name" value="${escapeHTML(contact.full_name)}" required>
+                <input type="text" name="full_name" value="${escapeHTML(contact.full_name)}" required style="text-transform: uppercase;">
             </div>
             <div style="margin-bottom: 1rem;">
                 <label>Phone Number</label>
@@ -371,6 +371,8 @@ async function showContactModal(id = null) {
             const data = Object.fromEntries(fd.entries());
             data.department_id = state.activeDeptId;
             data.active = fd.get('active') === 'on';
+            if (data.short_name) data.short_name = data.short_name.toUpperCase();
+            if (data.full_name) data.full_name = data.full_name.toUpperCase();
 
             console.log("Normalized contact data to save:", data);
             
